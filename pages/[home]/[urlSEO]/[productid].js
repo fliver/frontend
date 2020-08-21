@@ -1,15 +1,16 @@
 import ProductHome from '../../../components/Templates/Business/ProductHome';
+import config from '../../../src/config';
 
 const ProductPage = ({
   data, productid, g, v,
 }) => {
   if (!data.account) return <h1>404</h1>;
 
-  const [displayProduct] = data.products.filter(
+  const [singleProduct] = data.products.filter(
     (product) => product._id.toString() === productid,
   );
 
-  return <ProductHome data={data} displayProduct={displayProduct} group={g} vars={v} />;
+  return <ProductHome data={data} singleProduct={singleProduct} group={g} vars={v} />;
 };
 
 export async function getServerSideProps({ query }) {
@@ -18,7 +19,7 @@ export async function getServerSideProps({ query }) {
     productid,
   } = query;
 
-  const res = await fetch(`http://localhost:5000/api/account/${home}`);
+  const res = await fetch(`${config.domain}/api/account/${home}`);
   const data = await res.json();
 
   return {

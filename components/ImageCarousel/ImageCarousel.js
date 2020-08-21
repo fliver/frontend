@@ -4,9 +4,8 @@ import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
 import config from '../../src/config';
 import styles from './ImageCarousel.module.css';
 
-export default function ImageCarousel({ imgGroup }) {
+export default function ImageCarousel({ imgGroup, altPrefix }) {
   const [imgIdx, setImgIdx] = useState(0);
-  const data = { title: 'novo produto' };
 
   const forward = () => {
     if (imgIdx < imgGroup.length - 1) {
@@ -25,7 +24,7 @@ export default function ImageCarousel({ imgGroup }) {
   return (
     <div className={styles.container}>
       <div className={styles.wrap}>
-        <img src={`${config.domain}static/${imgGroup[imgIdx]}`} alt={data.title} />
+        <img src={`${config.domain}/static/${imgGroup[imgIdx]}`} alt={`${altPrefix} ${imgIdx}`} />
       </div>
       <div className={styles.controller}>
         <div className={styles.controller_btn}>

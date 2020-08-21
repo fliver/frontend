@@ -24,5 +24,8 @@ module.exports = {
     'react/prop-types': 'off',
     'jsx-a11y/control-has-associated-label': 'off',
     'jsx-a11y/anchor-is-valid': 'off',
+    'react/forbid-prop-types': 'off',
+    'react/jsx-props-no-spreading': 'off',
+    'react/destructuring-assignment': 'off',
   },
 };

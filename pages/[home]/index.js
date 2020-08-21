@@ -1,33 +1,31 @@
-import Router from 'next/router'
-import BusinessHome from '../../components/Templates/Business/BusinessHome'
-import ProductHome from '../../components/Templates/Business/ProductHome'
-import UserHome from '../../components/Templates/User/UserHome'
+import BusinessHome from '../../components/Templates/Business/BusinessHome';
+import UserHome from '../../components/Templates/User/UserHome';
+import config from '../../src/config';
 
-const HomePage = ({ data, homepageSlug }) => {
-  if(!data.account) return <h1>404</h1>
+const HomePage = ({ data, query }) => {
+  if (!data.account) return <h1>404 - Não Encontrado</h1>;
 
-  const { accountType } = data.account
+  const { accountType } = data.account;
 
-  if (accountType === 'business') return <BusinessHome data={data}/>
+  if (accountType === 'business') {
+    return <BusinessHome data={data} {...query} />;
+  }
 
-  if (accountType === 'user') return <UserHome data={data}/>
-  
-}
-
-
+  return <UserHome data={data} />;
+};
 
 export async function getServerSideProps({ query }) {
+  const { home } = query;
 
-  const { home } = query
-
-  const res = await fetch(`http://localhost:5000/api/account/${home}`);
-  const data = await res.json()
+  const res = await fetch(`${config.domain}/api/account/${home}`);
+  const data = await res.json();
 
   return {
     props: {
       data,
-    }
-  }
+      query,
+    },
+  };
 }
 
-export default HomePage
+export default HomePage;

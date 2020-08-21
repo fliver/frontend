@@ -1,0 +1,34 @@
+.container {
+  margin: 0;
+  box-sizing: border-box;
+  width: 100%;
+  height: 11.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: solid 1px #cacaca;
+}
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* .wrap {
+  line-height: 1.8rem;
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+} */
+
+.logo img {  
+  border-radius: 50%;
+}
+
+.title h1 {  
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 1.8rem;
+}

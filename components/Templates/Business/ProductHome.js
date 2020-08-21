@@ -1,60 +1,81 @@
-import Link from 'next/link';
-import React, { useState } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import Container from '@material-ui/core/Container';
 import ImageCarousel from '../../ImageCarousel/ImageCarousel';
 import styles from './ProductHome.module.css';
+import { CartContext } from '../../../src/contexts/CartContext';
+import NavBar from '../../NavBar/NavBar';
+import CustomHead from '../../CustomHead/CustomHead';
+import getProductMainImage from '../../../src/utils/getProductMainImage';
+import setVarsBasedOnImgGroup from '../../../src/utils/setVarsBasedOnImgGroup';
+import ProductFeed from '../../ProductFeed/ProductFeed';
 
-export default function ProductHome({ data, displayProduct }) {
-  const [group, setGroup] = useState(displayProduct.imageGroup[0]);
-  const [vars, setVars] = useState(displayProduct.vars.filter(
-    (itemVar) => itemVar.imageGroupId.toString() === group.id,
-  ));
+export default function ProductHome({ data, singleProduct }) {
+  const { account, products } = data;
+  const { addProduct } = useContext(CartContext);
 
-  const [size, setSize] = useState(vars[0]);
-
+  const [group, setGroup] = useState(singleProduct.imageGroup[0]);
+  const [vars, setVars] = useState(() => setVarsBasedOnImgGroup(singleProduct));
+  const [sku, setSku] = useState(vars[0]);
   const handleGroup = (idx) => {
-    setGroup(displayProduct.imageGroup[idx]);
-    const varsBasedOnGroup = displayProduct.vars.filter(
+    setGroup(singleProduct.imageGroup[idx]);
+    const varsBasedOnGroup = singleProduct.vars.filter(
       (itemVar) => itemVar.imageGroupId.toString() === group.id,
     );
     setVars(varsBasedOnGroup);
-    setSize(0);
+    setSku(0);
   };
 
   const handleVars = (idx) => {
-    setSize(vars[idx]);
+    setSku(vars[idx]);
   };
+
+  useEffect(() => {
+    setGroup(singleProduct.imageGroup[0]);
+    setVars(() => setVarsBasedOnImgGroup(singleProduct));
+    const [initialsku] = setVarsBasedOnImgGroup(singleProduct);
+    setSku(initialsku);
+  }, [singleProduct]);
 
   const getPrice = () => {
-    if (displayProduct.price.isSale) {
-      return `de R$${displayProduct.price.original} por R$${displayProduct.price.final}`;
+    if (singleProduct.price.isSale) {
+      return `de R$${singleProduct.price.original} por R$${singleProduct.price.final}`;
     }
-    return `R$${displayProduct.price.original}`;
+    return `R$${singleProduct.price.original}`;
   };
 
+  const handleOtherProducts = (currentProduct) => (
+    products.filter((product) => product._id !== currentProduct._id)
+  );
+
   return (
-    <Container maxWidth="sm" disableGutters>
-      <Link href="/[home]" as={`/${data.account.businessName}`}>
-        <a>
-          VOLTAR
-        </a>
-      </Link>
-      <ImageCarousel imgGroup={group.images} />
-      <div className={styles.product_content}>
-        <div>
-          <h1>{displayProduct.name}</h1>
-          <h2>{getPrice()}</h2>
-        </div>
-        <div className={styles.group_wrap}>
-          <div className={styles.group_name}>
-            <p>
-              Cor:
-              <span>{group.color.name}</span>
-            </p>
+    <div>
+      <CustomHead
+        title={singleProduct.name}
+        description={singleProduct.description}
+        canonicalURL={singleProduct.slug}
+        ogURL={singleProduct.slug}
+        ogTitle={singleProduct.name}
+        ogDescription={singleProduct.description}
+        ogImage={getProductMainImage(singleProduct)}
+      />
+      <NavBar backButton account={account} />
+      <Container maxWidth="sm" disableGutters>
+        <ImageCarousel imgGroup={group.images} altPrefix={singleProduct.name} />
+        <div className={styles.product_content}>
+          <div>
+            <h1>{singleProduct.name}</h1>
+            <h2>{getPrice()}</h2>
           </div>
-          <div className={styles.group_item}>
-            {
-            displayProduct.imageGroup.map((item, idx) => (
+          <div className={styles.group_wrap}>
+            <div className={styles.group_name}>
+              <p>
+                Cor:
+                <span>{group.color.name}</span>
+              </p>
+            </div>
+            <div className={styles.group_item}>
+              {
+            singleProduct.imageGroup.map((item, idx) => (
               <div>
                 <style jsx>
                   {`
@@ -67,31 +88,40 @@ export default function ProductHome({ data, displayProduct }) {
               </div>
             ))
           }
-          </div>
-          <div className={styles.group_name}>
-            <p>
-              Tamanho:
-              <span>{size.size}</span>
-            </p>
-          </div>
-          <div className={styles.group_item}>
-            {
-            vars.map((item, idx) => (
+            </div>
+            <div className={styles.group_name}>
+              <p>
+                Tamanho:
+                <span>{sku.size}</span>
+              </p>
+            </div>
+            <div className={styles.group_item}>
+              {
+            vars.map((itemSku, idx) => (
               <div>
-                <button type="button" onClick={() => handleVars(idx)}>{item.size}</button>
+                <button type="button" onClick={() => handleVars(idx)}>{itemSku.size}</button>
               </div>
             ))
           }
-          </div>
-          <div>
-            <p>{displayProduct.description}</p>
+            </div>
+            <div>
+              <p>{singleProduct.description}</p>
+            </div>
           </div>
         </div>
-      </div>
-      <div className={styles.view_add_button}>
-        <button type="button">Adicionar</button>
-      </div>
-    </Container>
-
+        <h2> Mais Produtos </h2>
+        <ProductFeed account={account} products={handleOtherProducts(singleProduct)} />
+        <div className={styles.view_add_button}>
+          <button type="button" onClick={() => addProduct({ singleProduct, sku })}>Comprar</button>
+        </div>
+      </Container>
+      {/* <FilterSection
+          search={handleSearch}
+          clearFilter={clearFilter}
+          displayChip={displayChip}
+          searchValue={searchValue}
+          setSearchValue={setSearchValue}
+        /> */}
+    </div>
   );
 }
