@@ -1,5 +1,8 @@
-import { useContext } from 'react';
-import { useRouter } from 'next/router';
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+import { useState, useEffect, useContext } from 'react';
+import { mask as masker, unMask } from 'remask';
+
 import Container from '@material-ui/core/Container';
 import { makeStyles } from '@material-ui/core/styles';
 import List from '@material-ui/core/List';
@@ -11,14 +14,30 @@ import AddIcon from '@material-ui/icons/Add';
 import RemoveIcon from '@material-ui/icons/Remove';
 import Card from '@material-ui/core/Card';
 import CardMedia from '@material-ui/core/CardMedia';
-import config from '../../../src/config';
-import CustomHead from '../../CustomHead/CustomHead';
-import NavBar from '../../NavBar/NavBar';
-import { CartContext } from '../../../src/contexts/CartContext';
+import Radio from '@material-ui/core/Radio';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import CircularProgress from '@material-ui/core/CircularProgress';
+import EditLocationIcon from '@material-ui/icons/EditLocation';
 
-const useStyles = makeStyles(() => ({
+// import CustomHead from '../../CustomHead/CustomHead';
+import FullScreenDialog from '../../FullScreenDialog';
+import NavBar from '../../NavBar/NavBar';
+import Input from '../../Input/Input';
+
+import config from '../../../src/config';
+import { CartContext } from '../../../src/contexts/CartContext';
+import api from '../../../src/services/api';
+
+const useStyles = makeStyles((theme) => ({
+  linearloading: {
+    width: '100%',
+    '& > * + *': {
+      marginTop: theme.spacing(2),
+    },
+  },
   container: {
     height: '100vh',
+    marginBottom: '4rem',
   },
   listItem: {
     padding: '4px 6px',
@@ -82,74 +101,186 @@ const useStyles = makeStyles(() => ({
     textTransform: 'uppercase',
     fontSize: 'large',
   },
+  address: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#fff',
+    padding: '0 20px',
+    border: '1px solid #cacaca',
+    lineHeight: '0.5rem',
+    width: '80%',
+    fontSize: '0.8rem',
+    '& div p:first-child': {
+      fontWeight: '700',
+      fontSize: '0.9rem',
+    },
+  },
 }));
 
 export default function ShoppingCart() {
-  const { cartProducts } = useContext(CartContext);
+  const { cartProducts, addUnit, removeUnit, removeProduct } = useContext(CartContext);
   const classes = useStyles();
-  const router = useRouter();
 
-  const handleCheckout = () => {
-    router.push('https://www.google.com');
+  const [cep, setCep] = useState('');
+  const [selectedShipping, setSelectedShipping] = useState({ type: null });
+  const [shippingOptions, setShippingOptions] = useState(null);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleSetShipping = async ({ shipping, user }) => {
+    setShippingOptions(shipping);
+    setUser(user);
+    console.log(user);
+    setSelectedShipping({ type: null });
   };
+
+  const handleInputChance = (e) => {
+    setCep(masker(unMask(e.target.value), ['99999-999']));
+  };
+
+  const handleRadioChange = (option) => {
+    // const idx = Number(e.target.value);
+    // setSelectedShipping(idx);
+    setSelectedShipping(option);
+  };
+
+  const handleClickOpen = () => {
+    setIsOpen(true);
+  };
+
+  const handleClose = () => {
+    setIsOpen(false);
+  };
+
   return (
     <div>
       <NavBar backButton account={{ displayName: 'Checkout' }} />
       <Container className={classes.container} maxWidth="sm" disableGutters>
         <div className="list">
           {
-            cartProducts.map((product) => (
-              <List>
-                <ListItem className={classes.listItem} disableGutters>
-                  <Card className={classes.listContent}>
-                    <CardMedia
-                      className={classes.cover}
-                      image={`${config.domain}/static/${product.imageGroup.images[0]}`}
-                      title={product.name}
-                    />
-                    <div className={classes.productInfo}>
-                      <div className={classes.productInfoContent}>
-                        <div>
-                          <ListItemText
-                            primary={product.name}
-                            secondary={`Cor: ${product.imageGroup.color.name} | Tamanho: ${product.vars.size}`}
-                          />
-                        </div>
-                        <IconButton aria-label="Delete" edge="end">
-                          <DeleteIcon />
-                        </IconButton>
-                      </div>
-
-                      <div className={classes.productInfoContent}>
-                        <div className={classes.qtyController}>
-                          <IconButton aria-label="Remove" edge="start">
-                            <RemoveIcon />
-                          </IconButton>
-                          <ListItemText primary="1" />
-                          <IconButton aria-label="Add">
-                            <AddIcon />
+            cartProducts.map((product, idx) => (
+              <div key={product.vars.id}>
+                <List>
+                  <ListItem className={classes.listItem} disableGutters>
+                    <Card className={classes.listContent}>
+                      <CardMedia
+                        className={classes.cover}
+                        image={`${config.domain}/static/${product.imageGroup.images[0]}`}
+                        title={product.name}
+                      />
+                      <div className={classes.productInfo}>
+                        <div className={classes.productInfoContent}>
+                          <div>
+                            <ListItemText
+                              primary={product.name}
+                              secondary={`Cor: ${product.imageGroup.color.name} | Tamanho: ${product.vars.size}`}
+                            />
+                          </div>
+                          <IconButton aria-label="Delete" edge="end" onClick={() => removeProduct(product.vars.id)}>
+                            <DeleteIcon />
                           </IconButton>
                         </div>
-                        <div>
-                          <ListItemText primary={product.price.original} />
+
+                        <div className={classes.productInfoContent}>
+                          <div className={classes.qtyController}>
+                            <IconButton aria-label="Remove" edge="start" onClick={() => removeUnit(idx, product.vars.id)}>
+                              <RemoveIcon />
+                            </IconButton>
+                            <ListItemText primary={product.quantity} />
+                            <IconButton aria-label="Add" onClick={() => addUnit(idx)}>
+                              <AddIcon />
+                            </IconButton>
+                          </div>
+                          <div>
+                            <ListItemText primary={product.price.original} />
+                          </div>
                         </div>
+
                       </div>
 
-                    </div>
-
-                  </Card>
-                </ListItem>
-              </List>
+                    </Card>
+                  </ListItem>
+                </List>
+              </div>
             ))
           }
         </div>
         <div className={classes.orderDetail}>
-          <p>Subtotal</p>
+          <h3>Subtotal</h3>
           <p>R$ 49,00</p>
         </div>
         <div className={classes.orderDetail}>
-          <input placeholder="Digite seu CEP" />
-          <p>R$ 0,00</p>
+          <h3>Taxa de Entrega</h3>
+          {
+              loading ? <CircularProgress color="secondary" /> : (
+                <p>
+                  {!selectedShipping.type && '---'}
+                  {selectedShipping.type && `R$ ${selectedShipping.Valor}`}
+                </p>
+              )
+            }
+        </div>
+        <div className={classes.orderDetail}>
+          {
+            !user ? (
+              <div className={classes.address} onClick={handleClickOpen}>
+                <div>
+                  <p>Adicione um Endereço</p>
+                  <p>Calcule o frete</p>
+                </div>
+                <div>
+                  <IconButton color="secondary">
+                    <EditLocationIcon />
+                  </IconButton>
+                </div>
+              </div>
+            ) : (
+              <div className={classes.address} onClick={handleClickOpen}>
+                <div>
+                  <p>{`${user.firstname} ${user.lastname}`}</p>
+                  <p>{`${user.street}, ${user.number}, ${user.complement}`}</p>
+                  <p>{`CEP: ${user.cep} - ${user.state}, ${user.city}`}</p>
+                </div>
+                <div>
+                  <IconButton color="secondary">
+                    <EditLocationIcon />
+                  </IconButton>
+                </div>
+              </div>
+            )
+          }
+        </div>
+        <div className={classes.orderDetail}>
+          <div>
+            {
+              shippingOptions && (
+                <>
+                  <p>Escolha Forma de Entrega:</p>
+                  <div>
+                    {shippingOptions.types.map(
+                      (option) => (
+                        <FormControlLabel
+                          label={`R$ ${option.Valor} - ${option.type}: ${option.PrazoEntrega} dias úteis`}
+                          control={(
+                            <Radio
+                              checked={selectedShipping.type === option.type}
+                              onChange={() => handleRadioChange(option)}
+                              value={option.type}
+                              name="radio-button-demo"
+                              inputProps={{ 'aria-label': 'A' }}
+                            />
+                    )}
+                        />
+                      ),
+                    )}
+                  </div>
+                </>
+              )
+                }
+
+          </div>
         </div>
         <div className={classes.orderDetail}>
           <h2>Total a Pagar</h2>
@@ -165,7 +296,13 @@ export default function ShoppingCart() {
             Enviar Pedido Via WhatsApp
           </a>
         </div>
+        <FullScreenDialog
+          isOpen={isOpen}
+          handleClose={handleClose}
+          handleSetShipping={handleSetShipping}
+        />
       </Container>
+
     </div>
   );
 }

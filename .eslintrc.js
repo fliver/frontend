@@ -27,5 +27,6 @@ module.exports = {
     'react/forbid-prop-types': 'off',
     'react/jsx-props-no-spreading': 'off',
     'react/destructuring-assignment': 'off',
+    'no-unused-expressions': 'off',
   },
 };

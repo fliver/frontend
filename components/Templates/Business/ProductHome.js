@@ -18,16 +18,19 @@ export default function ProductHome({ data, singleProduct }) {
   const [sku, setSku] = useState(vars[0]);
   const handleGroup = (idx) => {
     setGroup(singleProduct.imageGroup[idx]);
-    const varsBasedOnGroup = singleProduct.vars.filter(
-      (itemVar) => itemVar.imageGroupId.toString() === group.id,
-    );
-    setVars(varsBasedOnGroup);
-    setSku(0);
   };
 
   const handleVars = (idx) => {
     setSku(vars[idx]);
   };
+
+  useEffect(() => {
+    const varsBasedOnGroup = singleProduct.vars.filter(
+      (itemVar) => itemVar.imageGroupId.toString() === group.id,
+    );
+    setVars(varsBasedOnGroup);
+    setSku(0);
+  }, [group]);
 
   useEffect(() => {
     setGroup(singleProduct.imageGroup[0]);
