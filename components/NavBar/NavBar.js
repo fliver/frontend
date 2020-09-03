@@ -35,7 +35,7 @@ const useStyles = makeStyles(() => ({
 }));
 
 const NavBar = (props) => {
-  const { cartProducts } = useContext(CartContext);
+  const { totalUnits } = useContext(CartContext);
   const classes = useStyles();
 
   const goHome = () => {
@@ -45,6 +45,10 @@ const NavBar = (props) => {
   const displayShoppingCard = () => {
     Router.push('/[home]/cart', '/amaro/cart');
   };
+
+  const getTotalProducts = () => {
+  
+  }
 
   return (
     <div className={classes.grow}>
@@ -73,7 +77,7 @@ const NavBar = (props) => {
           <div className={classes.grow} />
 
           <IconButton edge="end" aria-label="Carrinho de compra" color="inherit" onClick={displayShoppingCard}>
-            <Badge badgeContent={cartProducts.length} color="secondary">
+            <Badge badgeContent={totalUnits} color="secondary">
               <LocalMallIcon />
             </Badge>
           </IconButton>

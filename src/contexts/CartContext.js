@@ -1,3 +1,4 @@
+/* eslint-disable react/no-this-in-sfc */
 import { createContext, useState, useEffect } from 'react';
 
 export const CartContext = createContext();
@@ -16,9 +17,6 @@ const CartContextProvider = (props) => {
       vars: sku,
       quantity: 1,
     };
-    console.log('add singleProduct ', singleProduct);
-    console.log('add sku singleProduct ', sku);
-    console.log('skuToAdd ', skuToAdd);
 
     setCartProducts([...cartProducts, skuToAdd]);
   };
@@ -30,9 +28,6 @@ const CartContextProvider = (props) => {
   };
 
   const addProduct = ({ singleProduct, sku }) => {
-    // checar se já existe mesmo sku adicionado. Se existir,
-    // adicionar quantidade, se não existir adicionar produto.
-
     const isSku = [];
     cartProducts.forEach((product, idx) => {
       if (product.vars.id === sku.id) {
@@ -42,11 +37,6 @@ const CartContextProvider = (props) => {
         });
       }
     });
-
-    console.log('singleProduct ', singleProduct);
-    console.log('sku ', sku);
-    console.log('isSku ', isSku);
-
     isSku.length > 0 ? addUnit(isSku[0].position) : addNewProduct(singleProduct, sku);
   };
 
@@ -65,6 +55,14 @@ const CartContextProvider = (props) => {
     }
   };
 
+  const priceBasedOnUnits = (qty, price) => qty * price;
+  const totalUnits = cartProducts.reduce((acc, product) => acc + product.quantity, 0);
+
+  const subTotal = cartProducts.reduce((acc, product) => {
+    const productTotal = priceBasedOnUnits(product.quantity, product.price.original);
+    return acc + productTotal;
+  }, 0);
+
   useEffect(() => {
     const localStorageCart = localStorage.getItem('cart');
     return localStorageCart ? setCartProducts(JSON.parse(localStorageCart)) : null;
@@ -72,12 +70,18 @@ const CartContextProvider = (props) => {
 
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cartProducts));
-    console.log('cartProducts ', cartProducts);
   }, [cartProducts]);
 
   return (
     <CartContext.Provider value={{
-      addProduct, addUnit, removeProduct, removeUnit, cartProducts,
+      addProduct,
+      addUnit,
+      removeProduct,
+      removeUnit,
+      cartProducts,
+      totalUnits,
+      subTotal,
+      priceBasedOnUnits,
     }}
     >
       { props.children }

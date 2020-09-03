@@ -1,7 +1,6 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
-import { useState, useEffect, useContext } from 'react';
-import { mask as masker, unMask } from 'remask';
+import { useState, useContext, useEffect } from 'react';
 
 import Container from '@material-ui/core/Container';
 import { makeStyles } from '@material-ui/core/styles';
@@ -16,17 +15,18 @@ import Card from '@material-ui/core/Card';
 import CardMedia from '@material-ui/core/CardMedia';
 import Radio from '@material-ui/core/Radio';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
-import CircularProgress from '@material-ui/core/CircularProgress';
 import EditLocationIcon from '@material-ui/icons/EditLocation';
 
 // import CustomHead from '../../CustomHead/CustomHead';
 import FullScreenDialog from '../../FullScreenDialog';
 import NavBar from '../../NavBar/NavBar';
-import Input from '../../Input/Input';
 
 import config from '../../../src/config';
+
+import isEmptyObject from '../../../src/utils/isEmptyObject';
+
 import { CartContext } from '../../../src/contexts/CartContext';
-import api from '../../../src/services/api';
+import { UserContext } from '../../../src/contexts/UserContext';
 
 const useStyles = makeStyles((theme) => ({
   linearloading: {
@@ -119,30 +119,18 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function ShoppingCart() {
-  const { cartProducts, addUnit, removeUnit, removeProduct } = useContext(CartContext);
-  const classes = useStyles();
+  const {
+    cartProducts, addUnit, removeUnit, removeProduct, subTotal, priceBasedOnUnits,
+  } = useContext(CartContext);
+  const { user } = useContext(UserContext);
 
-  const [cep, setCep] = useState('');
+  const [total, setTotal] = useState(0);
   const [selectedShipping, setSelectedShipping] = useState({ type: null });
-  const [shippingOptions, setShippingOptions] = useState(null);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleSetShipping = async ({ shipping, user }) => {
-    setShippingOptions(shipping);
-    setUser(user);
-    console.log(user);
-    setSelectedShipping({ type: null });
-  };
-
-  const handleInputChance = (e) => {
-    setCep(masker(unMask(e.target.value), ['99999-999']));
-  };
+  const classes = useStyles();
 
   const handleRadioChange = (option) => {
-    // const idx = Number(e.target.value);
-    // setSelectedShipping(idx);
     setSelectedShipping(option);
   };
 
@@ -154,12 +142,30 @@ export default function ShoppingCart() {
     setIsOpen(false);
   };
 
-  return (
-    <div>
-      <NavBar backButton account={{ displayName: 'Checkout' }} />
-      <Container className={classes.container} maxWidth="sm" disableGutters>
-        <div className="list">
-          {
+  const handleWhatsAppOrder = () => {
+    const phone = '5511984655006';
+    const businessName = 'Dazzlook';
+
+    const productsOrder = cartProducts.map((product) => `%2A-+C%C3%B3digo+do+produto%3A%2A+${product.vars.id}%0D%0A%2A-+Produto%3A%2A+${product.name}%0D%0A%2A-+Quantidade%3A%2A+${product.quantity}%0D%0A%2A-+Cor%3A%2A+${product.imageGroup.color.name}%0D%0A%2A-+Tamanho%3A%2A+${product.vars.size}%0D%0A%2A-+Pre%C3%A7o%3A%2A+${product.price.original}%0D%0A%0D%0A`);
+
+    const urlProducts = ''.concat(...productsOrder);
+
+    const [month, date, year] = (new Date()).toLocaleDateString().split('/');
+    const [hour, minute] = (new Date()).toLocaleTimeString().slice(0, 7).split(':');
+    const orderDate = `${date}%2F${month}%2F${year} - ${hour}%3A${minute}`;
+
+    return `https://api.whatsapp.com/send?phone=${phone}&text=%2ANovo+pedido+via+website%3A%2A+${businessName}%0D%0A%0D%0A---%0D%0A%0D%0A%2ADetalhes+do+pedido%3A%2A%0D%0A${urlProducts}%2ASubtotal%3A%2A+R%24+${subTotal}%0D%0A%0D%0A%2AEntrega%3A%2A%0D%0A%2A-+Entrega+via%3A%2A+Correios%0D%0A%2A-+Tipo+de+entrega%3A%2A+${selectedShipping.type}%0D%0A%2A-+Prazo+estimado%3A%2A+${selectedShipping.PrazoEntrega}+dias%0D%0A%2A-+Taxa%3A%2A+R%24+${selectedShipping.Valor}%0D%0A%0D%0A%2ATotal+a+pagar%3A%2A+R%24+${total}%0D%0A%0D%0A---%0D%0A%0D%0A%2ADados+e+Endere%C3%A7o+do+comprador%3A%2A%0D%0A%2A-+Nome+completo%3A%2A+${user.address.firstname}+${user.address.lastname}%0D%0A%2A-+Rua%3A%2A+${user.address.street}%0D%0A%2A-+N%C3%BAmero%3A%2A+${user.address.number}%0D%0A%2A-+Complemento%3A%2A+${user.address.complement}%0D%0A%2A-+Bairro%3A%2A+${user.address.district}%0D%0A%2A-+Cidade%3A%2A+${user.address.city}%0D%0A%2A-+Estado%3A%2A+${user.address.state}%0D%0A%2A-+CEP%3A%2A+${user.address.cep}%0D%0A%0D%0A---%0D%0A%0D%0A%2A-+Prazo+de+devolu%C3%A7%C3%A3o%3A%2A+7+dias+%C3%BAteis.%0D%0A%0D%0A%2A-+Pedido+realizado+em%3A%2A+${orderDate}`;
+  };
+
+  useEffect(() => {
+    selectedShipping.Valor
+    && setTotal(subTotal + selectedShipping.Valor.replace(',', '.') * 1);
+  }, [selectedShipping, subTotal]);
+
+  const ShippingContainer = () => (
+    <Container className={classes.container} maxWidth="sm" disableGutters>
+      <div className="list">
+        {
             cartProducts.map((product, idx) => (
               <div key={product.vars.id}>
                 <List>
@@ -194,7 +200,9 @@ export default function ShoppingCart() {
                             </IconButton>
                           </div>
                           <div>
-                            <ListItemText primary={product.price.original} />
+                            <ListItemText
+                              primary={priceBasedOnUnits(product.quantity, product.price.original)}
+                            />
                           </div>
                         </div>
 
@@ -206,25 +214,24 @@ export default function ShoppingCart() {
               </div>
             ))
           }
-        </div>
-        <div className={classes.orderDetail}>
-          <h3>Subtotal</h3>
-          <p>R$ 49,00</p>
-        </div>
-        <div className={classes.orderDetail}>
-          <h3>Taxa de Entrega</h3>
-          {
-              loading ? <CircularProgress color="secondary" /> : (
-                <p>
-                  {!selectedShipping.type && '---'}
-                  {selectedShipping.type && `R$ ${selectedShipping.Valor}`}
-                </p>
-              )
-            }
-        </div>
-        <div className={classes.orderDetail}>
-          {
-            !user ? (
+      </div>
+      <div className={classes.orderDetail}>
+        <h3>Subtotal</h3>
+        <p>
+          R$
+          {subTotal}
+        </p>
+      </div>
+      <div className={classes.orderDetail}>
+        <h3>Taxa de Entrega</h3>
+        <p>
+          {!selectedShipping.type && '---'}
+          {selectedShipping.type && `R$ ${selectedShipping.Valor}`}
+        </p>
+      </div>
+      <div className={classes.orderDetail}>
+        {
+            isEmptyObject(user) ? (
               <div className={classes.address} onClick={handleClickOpen}>
                 <div>
                   <p>Adicione um Endereço</p>
@@ -239,9 +246,9 @@ export default function ShoppingCart() {
             ) : (
               <div className={classes.address} onClick={handleClickOpen}>
                 <div>
-                  <p>{`${user.firstname} ${user.lastname}`}</p>
-                  <p>{`${user.street}, ${user.number}, ${user.complement}`}</p>
-                  <p>{`CEP: ${user.cep} - ${user.state}, ${user.city}`}</p>
+                  <p>{`${user.address.firstname} ${user.address.lastname}`}</p>
+                  <p>{`${user.address.street}, ${user.address.number}, ${user.address.complement}`}</p>
+                  <p>{`CEP: ${user.address.cep} - ${user.address.state}, ${user.address.city}`}</p>
                 </div>
                 <div>
                   <IconButton color="secondary">
@@ -251,15 +258,15 @@ export default function ShoppingCart() {
               </div>
             )
           }
-        </div>
-        <div className={classes.orderDetail}>
-          <div>
-            {
-              shippingOptions && (
+      </div>
+      <div className={classes.orderDetail}>
+        <div>
+          {
+              !isEmptyObject(user) && (
                 <>
                   <p>Escolha Forma de Entrega:</p>
                   <div>
-                    {shippingOptions.types.map(
+                    {user.shipping.types.map(
                       (option) => (
                         <FormControlLabel
                           label={`R$ ${option.Valor} - ${option.type}: ${option.PrazoEntrega} dias úteis`}
@@ -280,29 +287,38 @@ export default function ShoppingCart() {
               )
                 }
 
-          </div>
         </div>
-        <div className={classes.orderDetail}>
-          <h2>Total a Pagar</h2>
-          <p>R$ 49,00</p>
-        </div>
-        <div className={classes.orderButtonContainer}>
-          <a
-            className={classes.orderButton}
-            rel="noreferrer"
-            target="_blank"
-            href="https://api.whatsapp.com/send?phone=5511984655006&text=%2ANovo%20pedido%20via%20website%3A%20Dazzlook%2A%0A%0A---%0A%0A%2AItens%2A%0A%2A1%20-%20Brinco%2A%20-%20R%24%C2%A099%2C00%0A%2ATotal%3A%2A%20R%24%C2%A099%2C00%0A%0A---%0A%0A%2ADados%20do%20comprador%2A%0ARafael%0A%0A---%0A%0APedido%20realizado%20em%2009%2F07%2F2020%20%C3%A0s%2010%3A29"
-          >
-            Enviar Pedido Via WhatsApp
-          </a>
-        </div>
-        <FullScreenDialog
-          isOpen={isOpen}
-          handleClose={handleClose}
-          handleSetShipping={handleSetShipping}
-        />
-      </Container>
+      </div>
+      <div className={classes.orderDetail}>
+        <h2>Total a Pagar</h2>
+        <p>
+          R$
+          {total}
+        </p>
+      </div>
+      <div className={classes.orderButtonContainer}>
+        <a
+          className={classes.orderButton}
+          rel="noreferrer"
+          target="_blank"
+          href={handleWhatsAppOrder()}
+        >
+          Enviar Pedido Via WhatsApp
+        </a>
+      </div>
+      <FullScreenDialog
+        isOpen={isOpen}
+        handleClose={handleClose}
+      />
+    </Container>
+  );
 
+  return (
+    <div>
+      <NavBar backButton account={{ displayName: 'Checkout' }} />
+      {cartProducts.length > 0 ? <ShippingContainer /> : (
+        <h2>Nenhum produto adicionado</h2>
+      ) }
     </div>
   );
 }

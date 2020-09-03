@@ -6,6 +6,7 @@ import CssBaseline from '@material-ui/core/CssBaseline';
 import theme from '../src/theme';
 import CartContextProvider from '../src/contexts/CartContext';
 import ProductFeedContextProvider from '../src/contexts/ProductFeedContext';
+import UserContextProvider from '../src/contexts/UserContext';
 
 export default function MyApp(props) {
   const { Component, pageProps } = props;
@@ -29,7 +30,9 @@ export default function MyApp(props) {
         <CssBaseline />
         <ProductFeedContextProvider>
           <CartContextProvider>
-            <Component {...pageProps} />
+            <UserContextProvider>
+              <Component {...pageProps} />
+            </UserContextProvider>
           </CartContextProvider>
         </ProductFeedContextProvider>
       </ThemeProvider>

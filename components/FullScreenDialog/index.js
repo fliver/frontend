@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   Formik, Form, Field, useField,
 } from 'formik';
@@ -6,19 +6,15 @@ import { mask, unMask } from 'remask';
 
 import { makeStyles } from '@material-ui/core/styles';
 import {
-  Card,
-  CardContent,
   Button,
   TextField,
   FormGroup,
   Box,
   Grid,
   Container,
-  Checkbox,
 } from '@material-ui/core';
 
 import Dialog from '@material-ui/core/Dialog';
-import Divider from '@material-ui/core/Divider';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
@@ -28,6 +24,9 @@ import Slide from '@material-ui/core/Slide';
 import api from '../../src/services/api';
 
 import CustomCheckbox from '../CustomCheckbox';
+import { UserContext } from '../../src/contexts/UserContext';
+
+import isEmptyObject from '../../src/utils/isEmptyObject';
 
 const useStyles = makeStyles((theme) => ({
   appBar: {
@@ -53,23 +52,12 @@ export function CepField(props) {
   );
 }
 
-export default function FullScreenDialog({ isOpen, handleClose, handleSetShipping }) {
+export default function FullScreenDialog({ isOpen, handleClose }) {
   const [open, setOpen] = useState(false);
+  const { user, setUser } = useContext(UserContext);
   const [cep, setCep] = useState('');
   const [shipping, setShipping] = useState(null);
-  const [initialValues, setInitialValues] = useState({
-    firstname: '',
-    lastname: '',
-    state: '',
-    city: '',
-    district: '',
-    cep: '',
-    street: '',
-    number: null,
-    complement: '',
-    country: '',
-    terms: false,
-  });
+  const [initialValues, setInitialValues] = useState({});
 
   const classes = useStyles();
 
@@ -94,14 +82,28 @@ export default function FullScreenDialog({ isOpen, handleClose, handleSetShippin
       district: res.data.address.bairro,
       street: res.data.address.logradouro,
       cep: sCepDestino,
+      number: '',
+      complement: '',
+      country: '',
+      terms: false,
+      firstname: '',
+      lastname: '',
     });
     setShipping(res.data);
   };
 
   const handleSubmit = (values) => {
-    handleSetShipping({ shipping, user: values });
+    // handleSetShipping({ shipping, user: values });
+    setUser({ shipping, address: values });
     handleClose();
   };
+
+  useEffect(() => {
+    !isEmptyObject(user) && (
+      setInitialValues(user.address),
+      setCep(user.address.cep)
+    );
+  }, [user]);
 
   useEffect(() => {
     cep.length === 9 && getShippingOptions();
@@ -134,7 +136,7 @@ export default function FullScreenDialog({ isOpen, handleClose, handleSetShippin
             initialValues={initialValues}
             onSubmit={(values) => handleSubmit(values)}
           >
-            {({ values }) => (
+            {() => (
               <Form>
                 <Box marginBottom={2} marginTop={2}>
                   <FormGroup>
@@ -144,30 +146,30 @@ export default function FullScreenDialog({ isOpen, handleClose, handleSetShippin
                 <Box marginBottom={2}>
                   <Grid container direction="row" justify="space-between" spacing={3}>
                     <Grid item xs={4}>
-                      <Field name="state" as={TextField} label="Estado" color="Secondary" />
+                      <Field name="state" as={TextField} label="Estado" color="secondary" />
                     </Grid>
                     <Grid item xs={4}>
-                      <Field name="city" as={TextField} label="Cidade" color="Secondary" />
+                      <Field name="city" as={TextField} label="Cidade" color="secondary" />
                     </Grid>
                     <Grid item xs={4}>
-                      <Field name="district" as={TextField} label="Bairro" color="Secondary" />
+                      <Field name="district" as={TextField} label="Bairro" color="secondary" />
                     </Grid>
                   </Grid>
                 </Box>
 
                 <Box marginBottom={2}>
                   <FormGroup>
-                    <Field name="street" as={TextField} label="Nome da Rua / Av." color="Secondary" />
+                    <Field name="street" as={TextField} label="Nome da Rua / Av." color="secondary" />
                   </FormGroup>
                 </Box>
 
                 <Grid container direction="row" justify="space-between" spacing={3}>
                   <Grid item xs={3}>
-                    <Field name="number" as={TextField} type="number" label="Número" color="Secondary" />
+                    <Field name="number" as={TextField} label="Número" color="secondary" />
                   </Grid>
                   <Grid item xs={9}>
                     <FormGroup>
-                      <Field name="complement" as={TextField} label="Aprto / Bloco" color="Secondary" />
+                      <Field name="complement" as={TextField} label="Aprto / Bloco" color="secondary" />
                     </FormGroup>
                   </Grid>
                 </Grid>
@@ -175,10 +177,10 @@ export default function FullScreenDialog({ isOpen, handleClose, handleSetShippin
                 <Box marginBottom={6}>
                   <Grid container direction="row" justify="space-between" spacing={3}>
                     <Grid item xs={6}>
-                      <Field name="firstname" as={TextField} label="Nome" color="Secondary" />
+                      <Field name="firstname" as={TextField} label="Nome" color="secondary" />
                     </Grid>
                     <Grid item xs={6}>
-                      <Field name="lastname" as={TextField} label="Sobrenome" color="Secondary" />
+                      <Field name="lastname" as={TextField} label="Sobrenome" color="secondary" />
                     </Grid>
                   </Grid>
                 </Box>
