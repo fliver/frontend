@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import Router from 'next/router';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Container from '@material-ui/core/Container';
@@ -8,7 +8,10 @@ import NavBar from '../../NavBar/NavBar';
 import ProductFeed from '../../ProductFeed/ProductFeed';
 import CustomHead from '../../CustomHead/CustomHead';
 
+import { BusinessContext } from '../../../src/contexts/BusinessContext';
+
 export default function BusinessHome({ data, ...rest }) {
+  const { setBusiness } = useContext(BusinessContext);
   const { account, products } = data;
   const [displayChip, setDisplayChip] = useState(false);
   const [searchValue, setSearchValue] = useState('');
@@ -31,6 +34,10 @@ export default function BusinessHome({ data, ...rest }) {
   };
 
   useEffect(() => {
+    setBusiness(data);
+  }, []);
+
+  useEffect(() => {
     if (rest.search !== '' && rest.search !== undefined) {
       handleSearch(rest.search);
       Router.push(
@@ -46,15 +53,15 @@ export default function BusinessHome({ data, ...rest }) {
       <CssBaseline />
       <Container maxWidth="sm" disableGutters>
         <CustomHead
-          title={account.displayName}
+          title={account.displayName || ''}
           description={account.about}
           canonicalURL={account.businessName}
           ogURL={account.businessName}
-          ogTitle={account.displayName}
+          ogTitle={account.displayName || ''}
           ogDescription={account.about}
           ogImage={account.logo}
         />
-        <NavBar />
+        <NavBar account={account} />
         <Header account={account} />
         <FilterSection
           search={handleSearch}
@@ -62,6 +69,7 @@ export default function BusinessHome({ data, ...rest }) {
           displayChip={displayChip}
           searchValue={searchValue}
           setSearchValue={setSearchValue}
+          businessName={account.businessName}
         />
         <ProductFeed account={account} products={productsList} />
       </Container>

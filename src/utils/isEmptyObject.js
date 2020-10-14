@@ -3,5 +3,6 @@ export default function isEmptyObject(obj) {
     JSON.stringify(obj) === 'null'
     || JSON.stringify(obj) === 'undefined'
     || JSON.stringify(obj) === '{}'
+    || obj === undefined
   );
 }

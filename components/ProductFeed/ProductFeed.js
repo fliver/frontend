@@ -81,7 +81,7 @@ const ProductFeed = ({ account, products }) => {
               </Typography>
         )}
           />
-          <Link href="/[home]/[urlSEO]/[productid]" as={`/${account.businessName}/nome-para-seo/${product._id}`}>
+          <Link href="/[home]/[productid]" as={`/${account.businessName}/${product.slug}`}>
             <a>
               <CardMedia
                 className={classes.media}
@@ -106,7 +106,7 @@ const ProductFeed = ({ account, products }) => {
                 ) && classes.cartIconHighLight}
                   `
                 }
-              onClick={() => addProduct(product)}
+              onClick={() => addProduct({ singleProduct: product, sku: product.vars[0] })}
             >
               <AddShoppingCartIcon />
             </IconButton>

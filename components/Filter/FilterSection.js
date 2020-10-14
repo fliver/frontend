@@ -10,6 +10,7 @@ const FilterSection = (
     displayChip,
     searchValue,
     setSearchValue,
+    businessName,
   },
 ) => {
   const [searchField, setSearchField] = useState(searchValue);
@@ -22,16 +23,16 @@ const FilterSection = (
   useEffect(() => {
     const address = {
       url: '/[home]',
-      as: '/amaro',
+      as: `/${businessName}`,
     };
 
     if (searchValue !== '') {
       address.url = `/[home]?search=${searchValue}`;
-      address.as = `/amaro?search=${searchValue}`;
+      address.as = `/${businessName}?search=${searchValue}`;
       setSearchField(searchValue);
     } else {
       address.url = '/[home]';
-      address.as = '/amaro';
+      address.as = `/${businessName}`;
     }
 
     router.push(`${address.url}`, `${address.as}`, { shallow: true });

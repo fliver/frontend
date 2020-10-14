@@ -39,11 +39,11 @@ const NavBar = (props) => {
   const classes = useStyles();
 
   const goHome = () => {
-    Router.push('/[home]', '/amaro');
+    Router.push('/[home]', `/${props.account.businessName}`);
   };
 
   const displayShoppingCard = () => {
-    Router.push('/[home]/cart', '/amaro/cart');
+    Router.push('/[home]/cart', `/${props.account.businessName}/cart`);
   };
 
   const getTotalProducts = () => {

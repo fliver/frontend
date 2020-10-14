@@ -6,7 +6,6 @@ import Button from '@material-ui/core/Button';
 
 import Link from '../src/Link';
 
-
 export default function About() {
   return (
     <Container maxWidth="sm">
@@ -14,7 +13,7 @@ export default function About() {
         <Typography variant="h4" component="h1" gutterBottom>
           Next.js example
         </Typography>
-        <Button variant="contained" color="primary" component={Link} naked href="/amaro">
+        <Button variant="contained" color="secondary" component={Link} naked href="/">
           Go to the main page
         </Button>
       </Box>

@@ -4,7 +4,9 @@ import Head from 'next/head';
 import { ThemeProvider } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import theme from '../src/theme';
+
 import CartContextProvider from '../src/contexts/CartContext';
+import BusinessContextProvider from '../src/contexts/BusinessContext';
 import ProductFeedContextProvider from '../src/contexts/ProductFeedContext';
 import UserContextProvider from '../src/contexts/UserContext';
 
@@ -31,7 +33,9 @@ export default function MyApp(props) {
         <ProductFeedContextProvider>
           <CartContextProvider>
             <UserContextProvider>
-              <Component {...pageProps} />
+              <BusinessContextProvider>
+                <Component {...pageProps} />
+              </BusinessContextProvider>
             </UserContextProvider>
           </CartContextProvider>
         </ProductFeedContextProvider>

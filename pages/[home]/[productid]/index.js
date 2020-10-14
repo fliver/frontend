@@ -1,14 +1,18 @@
 import ProductHome from '../../../components/Templates/Business/ProductHome';
+import NotFoundPage from '../../../components/Templates/404/NotFoundPage';
+
 import config from '../../../src/config';
 
 const ProductPage = ({
   data, productid, g, v,
 }) => {
-  if (!data.account) return <h1>404</h1>;
+  if (!data.account) return <NotFoundPage />;
 
   const [singleProduct] = data.products.filter(
-    (product) => product._id.toString() === productid,
+    (product) => product.slug.toString() === productid,
   );
+
+  if (!singleProduct) return <NotFoundPage data={data} />;
 
   return <ProductHome data={data} singleProduct={singleProduct} group={g} vars={v} />;
 };

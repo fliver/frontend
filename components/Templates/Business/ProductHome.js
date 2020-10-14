@@ -9,7 +9,10 @@ import getProductMainImage from '../../../src/utils/getProductMainImage';
 import setVarsBasedOnImgGroup from '../../../src/utils/setVarsBasedOnImgGroup';
 import ProductFeed from '../../ProductFeed/ProductFeed';
 
+import { BusinessContext } from '../../../src/contexts/BusinessContext';
+
 export default function ProductHome({ data, singleProduct }) {
+  const { setBusiness } = useContext(BusinessContext);
   const { account, products } = data;
   const { addProduct } = useContext(CartContext);
 
@@ -23,6 +26,10 @@ export default function ProductHome({ data, singleProduct }) {
   const handleVars = (idx) => {
     setSku(vars[idx]);
   };
+
+  useEffect(() => {
+    setBusiness(data);
+  }, []);
 
   useEffect(() => {
     const varsBasedOnGroup = singleProduct.vars.filter(

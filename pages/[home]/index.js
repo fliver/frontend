@@ -7,11 +7,7 @@ const HomePage = ({ data, query }) => {
 
   const { accountType } = data.account;
 
-  if (accountType === 'business') {
-    return <BusinessHome data={data} {...query} />;
-  }
-
-  return <UserHome data={data} />;
+  return accountType === 'business' ? <BusinessHome data={data} {...query} /> : <UserHome data={data} />;
 };
 
 export async function getServerSideProps({ query }) {
