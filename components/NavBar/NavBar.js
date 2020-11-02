@@ -35,7 +35,7 @@ const useStyles = makeStyles(() => ({
 }));
 
 const NavBar = (props) => {
-  const { totalUnits } = useContext(CartContext);
+  const { getTotalUnits } = useContext(CartContext);
   const classes = useStyles();
 
   const goHome = () => {
@@ -77,7 +77,7 @@ const NavBar = (props) => {
           <div className={classes.grow} />
 
           <IconButton edge="end" aria-label="Carrinho de compra" color="inherit" onClick={displayShoppingCard}>
-            <Badge badgeContent={totalUnits} color="secondary">
+            <Badge badgeContent={getTotalUnits({ businessSlug: props.account.businessName })} color="primary">
               <LocalMallIcon />
             </Badge>
           </IconButton>

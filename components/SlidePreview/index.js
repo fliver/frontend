@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import KeyboardArrowLeft from '@material-ui/icons/KeyboardArrowLeft';
 import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
@@ -33,6 +33,7 @@ const useStyles = makeStyles(() => ({
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: '1rem',
   },
   disableDots: {
     '& .MuiMobileStepper-dots': {
@@ -49,7 +50,6 @@ export default function SlidePreview({ images, alt }) {
   const [slideActive, setSlideActive] = useState(0);
   const maxSlides = images.length;
   const classes = useStyles();
-  const router = useRouter();
 
   const handleNextSlide = () => {
     setSlideActive((prevSlideActive) => prevSlideActive + 1);
@@ -58,6 +58,10 @@ export default function SlidePreview({ images, alt }) {
   const handleBackSlide = () => {
     setSlideActive((prevSlideActive) => prevSlideActive - 1);
   };
+
+  useEffect(() => {
+    setSlideActive(0);
+  }, [images]);
 
   return (
     <div>
@@ -76,14 +80,14 @@ export default function SlidePreview({ images, alt }) {
         (
           <Button size="small" onClick={handleBackSlide} disabled={slideActive === 0}>
             <KeyboardArrowLeft />
-            Voltar
+            {/* Voltar */}
           </Button>
 )
       )}
         />
         <img
           className={classes.cover}
-          src={`${config.domain}/static/${images[slideActive]}`}
+          src={`${config.mediaURL}/${images[slideActive]}`}
           alt={`${alt}-${slideActive}`}
         />
         {/* <CardMedia
@@ -100,7 +104,7 @@ export default function SlidePreview({ images, alt }) {
           nextButton={
         (
           <Button size="small" onClick={handleNextSlide} disabled={slideActive === maxSlides - 1}>
-            próxima
+            {/* próxima */}
             <KeyboardArrowRight />
           </Button>
 )
@@ -113,12 +117,6 @@ export default function SlidePreview({ images, alt }) {
         variant="text"
         activeStep={activeStep}
       /> */}
-      <Box display="flex" justifyContent="center">
-        <Button type="button">Editar</Button>
-      </Box>
-      <Box display="flex" justifyContent="center" style={{ padding: '1rem 0' }}>
-        <Button type="button" color="primary" onClick={() => router.push('/dashboard/products/create/group')}>Criar Grupo de Imagens</Button>
-      </Box>
     </div>
   );
 }

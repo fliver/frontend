@@ -12,7 +12,7 @@ const CustomCheckbox = (props) => {
 
   return (
     <FormControlLabel
-      control={<Checkbox {...field} {...props} />}
+      control={<Checkbox color="primary" {...field} {...props} />}
       label={props.label}
     />
   );

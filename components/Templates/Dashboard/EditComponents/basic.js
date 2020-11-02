@@ -17,6 +17,7 @@ import {
   Box,
   Container,
   Card,
+  CircularProgress,
 } from '@material-ui/core';
 
 import AppBar from '@material-ui/core/AppBar';
@@ -27,6 +28,7 @@ import Typography from '@material-ui/core/Typography';
 import CustomCheckbox from '../../../CustomCheckbox';
 import useAuthUser from '../../../../src/hooks/useAuthUser';
 import authApi from '../../../../src/services/api/authApi';
+import NavBarDashBoard from '../../../NavBarDashBoard';
 
 const useStyles = makeStyles(() => ({
   body: {
@@ -116,16 +118,7 @@ export default function Basic({ bid }) {
 
   return (
     <div>
-      <AppBar className={classes.appBar}>
-        <Toolbar>
-          <IconButton edge="start" color="inherit" onClick={handleBack} aria-label="close">
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="h6" className={classes.title}>
-            Informações Gerais
-          </Typography>
-        </Toolbar>
-      </AppBar>
+      <NavBarDashBoard backUrl={`/dashboard/manager?bid=${bid}`} title="Informações Gerais" />
       <Container disableGutters className={classes.body}>
         <Formik
           validationSchema={
@@ -156,7 +149,7 @@ export default function Basic({ bid }) {
                     disabled
                     label="Endereço do Site da Loja Não é Editável"
                     InputLabelProps={{ shrink: true }}
-                    color="secondary"
+                    color="primary"
                     error={touched.businessName && errors.businessName}
                     helperText={(touched.businessName && errors.businessName) ? errors.businessName : `www.fliver.app/${values.businessName}`}
                   />
@@ -170,7 +163,7 @@ export default function Basic({ bid }) {
                     as={TextField}
                     label="Nome da Loja"
                     InputLabelProps={{ shrink: true }}
-                    color="secondary"
+                    color="primary"
                     error={touched.displayName && errors.displayName}
                     helperText={(touched.displayName && errors.displayName) ? errors.displayName : 'Ex.: Dazzlook - Moda e Acessórios'}
                   />
@@ -184,7 +177,7 @@ export default function Basic({ bid }) {
                     as={TextField}
                     label="Sobre a Loja (Bio)"
                     InputLabelProps={{ shrink: true }}
-                    color="secondary"
+                    color="primary"
                     multiline
                     rows={4}
                     rowsMax={4}
@@ -201,7 +194,7 @@ export default function Basic({ bid }) {
                     as={TextField}
                     label="Email para contato interno"
                     InputLabelProps={{ shrink: true }}
-                    color="secondary"
+                    color="primary"
                     error={touched.supportEmail && errors.supportEmail}
                     helperText={(touched.supportEmail && errors.supportEmail) ? errors.supportEmail : 'Este email não ficará visível ao público'}
                   />
@@ -215,7 +208,7 @@ export default function Basic({ bid }) {
                     as={TextField}
                     label="Whatsapp com DDD. Ex: 11984655006"
                     InputLabelProps={{ shrink: true }}
-                    color="secondary"
+                    color="primary"
                     error={touched.whatsapp && errors.whatsapp}
                     helperText={(touched.whatsapp && errors.whatsapp) ? errors.whatsapp : 'Você receberá os pedidos direto em seu Whatsapp'}
                   />
@@ -264,7 +257,15 @@ export default function Basic({ bid }) {
 
               <Box justifyItems="center" justifyContent="center">
                 <FormGroup>
-                  <Button type="submit" variant="contained" color="secondary" disabled={isSubmitting}>Salvar Alterações</Button>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    color="primary"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting && <CircularProgress size={24} />}
+                    {!isSubmitting && 'Salvar Alterações'}
+                  </Button>
                 </FormGroup>
 
               </Box>

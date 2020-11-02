@@ -11,16 +11,18 @@ import Link from '../src/Link';
 export default function Index() {
   return (
     <Container maxWidth="sm">
-      <Box my={4} display="flex" flexDirection="column">
+      <Box my={4} display="flex" flexDirection="column" alignItems="center">
         <Typography variant="h4" component="h1" gutterBottom>
           Criar loja Gratuita!
         </Typography>
-        <Button variant="contained" color="secondary" component={Link} naked href="/sigin">
+        <Button variant="contained" color="primary" component={Link} naked href="/sigin" fullWidth>
           Criar Conta
         </Button>
-        <Link href="/login" color="secondary">
-          Já tem uma conta? Entre aqui.
-        </Link>
+        <Box m={2}>
+          <Link href="/login" color="primary">
+            Já tem uma conta? Entre aqui.
+          </Link>
+        </Box>
       </Box>
     </Container>
   );

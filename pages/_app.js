@@ -9,6 +9,7 @@ import CartContextProvider from '../src/contexts/CartContext';
 import BusinessContextProvider from '../src/contexts/BusinessContext';
 import ProductFeedContextProvider from '../src/contexts/ProductFeedContext';
 import UserContextProvider from '../src/contexts/UserContext';
+import UserAdmContextProvider from '../src/contexts/AuthAdmContext';
 
 export default function MyApp(props) {
   const { Component, pageProps } = props;
@@ -33,9 +34,11 @@ export default function MyApp(props) {
         <ProductFeedContextProvider>
           <CartContextProvider>
             <UserContextProvider>
-              <BusinessContextProvider>
-                <Component {...pageProps} />
-              </BusinessContextProvider>
+              <UserAdmContextProvider>
+                <BusinessContextProvider>
+                  <Component {...pageProps} />
+                </BusinessContextProvider>
+              </UserAdmContextProvider>
             </UserContextProvider>
           </CartContextProvider>
         </ProductFeedContextProvider>

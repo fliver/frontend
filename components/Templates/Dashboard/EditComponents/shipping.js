@@ -8,6 +8,7 @@ import {
   FormGroup,
   Box,
   Container,
+  CircularProgress,
 } from '@material-ui/core';
 
 import AppBar from '@material-ui/core/AppBar';
@@ -18,6 +19,7 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 import authApi from '../../../../src/services/api/authApi';
 import useAuthUser from '../../../../src/hooks/useAuthUser';
+import NavBarDashBoard from '../../../NavBarDashBoard';
 
 const useStyles = makeStyles(() => ({
   body: {
@@ -33,6 +35,7 @@ const useStyles = makeStyles(() => ({
 
 export default function Basic({ bid }) {
   const { isUser, user, setUser } = useAuthUser();
+  const [loading, setLoading] = useState(false);
   const [editingBusiness, setEditingBusiness] = useState(null);
   const [shippingErr, setShippingErr] = useState(false);
   const [shipping, setShipping] = useState({
@@ -57,9 +60,11 @@ export default function Basic({ bid }) {
   };
 
   const handleSubmit = async () => {
+    setLoading(true);
     const isShippingError = !shipping.correios && !shipping.pickup;
     if (isShippingError) {
       setShippingErr(true);
+      setLoading(false);
       return;
     }
 
@@ -80,6 +85,7 @@ export default function Basic({ bid }) {
         setUser(userToUpdate);
       }
     } catch (error) {
+      setLoading(false);
       if (error.message === 'Token expirado') {
         Router.replace('/login');
       } else {
@@ -108,6 +114,7 @@ export default function Basic({ bid }) {
         setUser(userToUpdate);
       }
     } catch (error) {
+      setLoading(false);
       if (error.message === 'Token expirado') {
         Router.replace('/login');
       } else {
@@ -115,6 +122,7 @@ export default function Basic({ bid }) {
       }
     }
 
+    setLoading(false);
     handleBack();
   };
 
@@ -133,23 +141,14 @@ export default function Basic({ bid }) {
 
   return (
     <div>
-      <AppBar className={classes.appBar}>
-        <Toolbar>
-          <IconButton edge="start" color="inherit" onClick={handleBack} aria-label="close">
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="h6" className={classes.title}>
-            Entrega e Retirada
-          </Typography>
-        </Toolbar>
-      </AppBar>
+      <NavBarDashBoard backUrl={`/dashboard/manager?bid=${bid}`} title="Entrega e Retirada" />
       <Container disableGutters className={classes.body}>
 
         <Typography variant="h5" component="h5">Entrega</Typography>
 
         <Box marginBottom={2}>
           <FormControlLabel
-            control={<Checkbox name="correios" checked={shipping.correios} onChange={handleChange} />}
+            control={<Checkbox name="correios" color="primary" checked={shipping.correios} onChange={handleChange} />}
             label="Habilitar Entrega Via Correios"
           />
         </Box>
@@ -158,7 +157,7 @@ export default function Basic({ bid }) {
 
         <Box marginBottom={2}>
           <FormControlLabel
-            control={<Checkbox name="pickup" checked={shipping.pickup} onChange={handleChange} />}
+            control={<Checkbox name="pickup" color="primary" checked={shipping.pickup} onChange={handleChange} />}
             label="Cliente Poderá Retirar na Loja"
           />
         </Box>
@@ -167,7 +166,16 @@ export default function Basic({ bid }) {
 
         <Box justifyItems="center" justifyContent="center">
           <FormGroup>
-            <Button type="button" variant="contained" color="secondary" onClick={() => handleSubmit()}>Salvar Alterações</Button>
+            <Button
+              type="button"
+              variant="contained"
+              color="primary"
+              onClick={() => handleSubmit()}
+              disabled={loading}
+            >
+              {loading && <CircularProgress size={24} />}
+              {!loading && 'Salvar Alterações'}
+            </Button>
           </FormGroup>
 
         </Box>

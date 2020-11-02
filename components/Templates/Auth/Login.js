@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { Formik, Form, Field } from 'formik';
 import { object, string } from 'yup';
 import {
-  TextField, Button, Container, Typography, Box, FormGroup,
+  TextField, Button, Container, Typography, Box, FormGroup, CircularProgress,
 } from '@material-ui/core';
 
 import { makeStyles } from '@material-ui/core/styles';
@@ -11,6 +11,8 @@ import { makeStyles } from '@material-ui/core/styles';
 import api from '../../../src/services/api';
 import { UserContext } from '../../../src/contexts/UserContext';
 import { BusinessContext } from '../../../src/contexts/BusinessContext';
+import useAuthUser from '../../../src/hooks/useAuthUser';
+import NavVarDashBoard from '../../NavBarDashBoard';
 
 const useStyles = makeStyles(() => ({
   errorMessage: {
@@ -18,7 +20,8 @@ const useStyles = makeStyles(() => ({
   },
 }));
 export default function UserLogin() {
-  const { user, setUser } = useContext(UserContext);
+  // const { user, setUser } = useContext(UserContext);
+  const { user, setUser } = useAuthUser();
   const [apiError, setApiError] = useState(null);
   const router = useRouter();
 
@@ -50,12 +53,10 @@ export default function UserLogin() {
   };
   return (
     <div>
+      <NavVarDashBoard backUrl="/" title="Entrar" />
       <Container>
         <Box m={2}>
           <FormGroup>
-            <Typography variant="h4" component="h2">
-              Entrar
-            </Typography>
             <Typography component="p">
               Faça Login para Editar ou Criar uma Loja.
             </Typography>
@@ -68,27 +69,37 @@ export default function UserLogin() {
             password: '',
           }}
           validationSchema={object({
-            username: string().required().max(30).min(2),
-            password: string().required().max(20).min(8),
+            username: string().required('Nome de Usuário Obrigatório').max(30, 'Máximo 30 caractéres').min(2, 'Mínimo 2 caractéres'),
+            password: string().required('Senha Obrigatória').max(20).min(8, 'Mínimo 8 caractéres'),
           })}
           onSubmit={(values) => handleSubmit(values)}
         >
           {
-            ({ touched, isSubmitting }) => (
+            ({ touched, errors, isSubmitting }) => (
               <Form autoComplete="off">
                 <Box margin={2}>
                   <FormGroup>
                     <Field
                       name="username"
                       as={TextField}
-                      label="Username"
-                      error={touched.username && apiError !== null}
+                      label="Seu Nome de Usuário (sem espaço)"
+                      error={(
+                        touched.username && apiError !== null)
+                        || (touched.username && errors.username)}
+                      helperText={touched.username && errors.username}
                     />
                   </FormGroup>
                 </Box>
                 <Box margin={2}>
                   <FormGroup>
-                    <Field name="password" as={TextField} type="password" label="Senha" />
+                    <Field
+                      name="password"
+                      as={TextField}
+                      type="password"
+                      label="Senha"
+                      error={touched.password && errors.password}
+                      helperText={touched.password && errors.password}
+                    />
                   </FormGroup>
                 </Box>
                 <Box margin={2}>
@@ -99,7 +110,8 @@ export default function UserLogin() {
                       color="primary"
                       disabled={isSubmitting}
                     >
-                      Entrar
+                      {isSubmitting && <CircularProgress size={24} />}
+                      {!isSubmitting && 'Entrar'}
                     </Button>
                     {apiError && <p className={classes.errorMessage}>{apiError.message}</p>}
                   </FormGroup>

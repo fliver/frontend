@@ -11,7 +11,7 @@ import CustomHead from '../../CustomHead/CustomHead';
 import { BusinessContext } from '../../../src/contexts/BusinessContext';
 
 export default function BusinessHome({ data, ...rest }) {
-  const { setBusiness } = useContext(BusinessContext);
+  const { business, setBusiness } = useContext(BusinessContext);
   const { account, products } = data;
   const [displayChip, setDisplayChip] = useState(false);
   const [searchValue, setSearchValue] = useState('');
@@ -34,7 +34,17 @@ export default function BusinessHome({ data, ...rest }) {
   };
 
   useEffect(() => {
-    setBusiness(data);
+    const bidx = business.findIndex(
+      (item) => item.account.businessName === data.account.businessName,
+    );
+
+    if (bidx >= 0) {
+      const updatedbArray = business;
+      updatedbArray[bidx] = data;
+      setBusiness(updatedbArray);
+    } else {
+      setBusiness([...business, data]);
+    }
   }, []);
 
   useEffect(() => {

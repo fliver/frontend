@@ -1,11 +1,11 @@
 import { useContext, useState, useEffect } from 'react';
-import { UserContext } from '../contexts/UserContext';
+import { AuthAdmContext } from '../contexts/AuthAdmContext';
 import isEmptyObject from '../utils/isEmptyObject';
 
 const useAuthUser = () => {
   const [checkUser, setCheckUser] = useState(false);
   const [isUser, setIsUser] = useState(false);
-  const { user, setUser } = useContext(UserContext);
+  const { user, setUser, logout } = useContext(AuthAdmContext);
 
   useEffect(() => {
     !isEmptyObject(user) && setIsUser(true);
@@ -16,6 +16,7 @@ const useAuthUser = () => {
     setUser,
     isUser,
     setCheckUser,
+    logout,
   };
 };
 

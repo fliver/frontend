@@ -23,7 +23,7 @@ export async function getServerSideProps({ query }) {
     productid,
   } = query;
 
-  const res = await fetch(`${config.domain}/api/account/${home}`);
+  const res = await fetch(`${config.api}/account/${home}`);
   const data = await res.json();
 
   return {

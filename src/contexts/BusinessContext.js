@@ -3,7 +3,7 @@ import { createContext, useState, useEffect } from 'react';
 export const BusinessContext = createContext();
 
 const BusinessContextProvider = (props) => {
-  const [business, setBusiness] = useState({});
+  const [business, setBusiness] = useState([]);
 
   useEffect(() => {
     const localStorageBusiness = localStorage.getItem('business');

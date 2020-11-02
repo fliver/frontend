@@ -23,7 +23,10 @@
     "react-color": "^2.18.1",
     "react-dom": "16.13.1",
     "react-slick": "^0.27.1",
+    "react-text-mask": "^5.4.3",
     "remask": "^0.1.0-alpha.5",
+    "simple-mask-money": "^3.0.1",
+    "text-mask-addons": "^3.8.0",
     "yup": "^0.29.3"
   },
   "devDependencies": {

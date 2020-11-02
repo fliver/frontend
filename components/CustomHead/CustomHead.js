@@ -20,7 +20,7 @@ const CustomHead = (
     <meta property="og:title" content={ogTitle} />
     <meta property="og:url" content={`${config.domain}/${ogURL}`} />
     <meta property="og:description" content={ogDescription} />
-    <meta property="og:image" content={`${config.domain}/static/${ogImage}`} />
+    <meta property="og:image" content={`${config.mediaURL}/${ogImage}`} />
   </Head>
 );
 

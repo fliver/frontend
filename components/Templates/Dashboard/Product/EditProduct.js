@@ -1,8 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Router, useRouter } from 'next/router';
+import { useRouter } from 'next/router';
 import {
   Formik, Form, Field, useField,
 } from 'formik';
+import { mask, unMask } from 'remask';
+import SimpleMaskMoney from 'simple-mask-money';
+import {
+  object, string, number, boolean, mixed,
+} from 'yup';
 import {
   AppBar,
   Toolbar,
@@ -41,6 +46,10 @@ import useAuthUser from '../../../../src/hooks/useAuthUser';
 import authApi from '../../../../src/services/api/authApi';
 
 import config from '../../../../src/config';
+import setVarsBasedOnImgGroup from '../../../../src/utils/setVarsBasedOnImgGroup';
+
+import styles from '../../Business/ProductHome.module.css';
+import CurrencyInput from '../../../CurrencyInput.js/Index';
 
 const useStyles = makeStyles((theme) => ({
   container: {
@@ -68,27 +77,64 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const ImageGroupControll = () => {
+const ImageGroupControll = ({
+  singleProduct, handleEditGroup, pid, bid,
+}) => {
   const [group, setGroup] = useState();
+  const [vars, setVars] = useState(() => setVarsBasedOnImgGroup(singleProduct));
+  const [sku, setSku] = useState(vars[0]);
+  const handleGroup = (idx) => {
+    setGroup(singleProduct.imageGroup[idx]);
+  };
+  const router = useRouter();
+
+  const handleVars = (idx) => {
+    setSku(vars[idx]);
+  };
+
+  useEffect(() => {
+    if (group) {
+      const varsBasedOnGroup = singleProduct.vars.filter(
+        (itemVar) => itemVar.imageGroupId.toString() === group.id,
+      );
+      setVars(varsBasedOnGroup);
+      setSku(0);
+    }
+  }, [group]);
+
+  useEffect(() => {
+    setGroup(singleProduct.imageGroup[0]);
+    setVars(() => setVarsBasedOnImgGroup(singleProduct));
+    const [initialsku] = setVarsBasedOnImgGroup(singleProduct);
+    setSku(initialsku);
+  }, [singleProduct]);
 
   return (
     <>
-      <div className={styles.product_content}>
-        <div className={styles.group_wrap}>
-          <div className={styles.group_name}>
-            <p>
-              Cor:
-              <span>{group.color.name}</span>
-            </p>
-          </div>
-          <div className={styles.group_item}>
-            {
+      <Box>
+        {
+        group && (
+          <>
+            <SlidePreview
+              images={group.images}
+              alt={group.color ? group.color.name : 'Undefined'}
+            />
+            <div className={styles.product_content}>
+              <div className={styles.group_wrap}>
+                <div className={styles.group_name}>
+                  <p>
+                    Cor:
+                    <span>{group.color ? group.color.name : 'Undefined'}</span>
+                  </p>
+                </div>
+                <div className={styles.group_item}>
+                  {
             singleProduct.imageGroup.map((item, idx) => (
               <div>
                 <style jsx>
                   {`
                 .btn_color {
-                  background-color: ${item.color.code};
+                  background-color: ${item.color ? item.color.code : '#000'};
                 }
               `}
                 </style>
@@ -96,24 +142,34 @@ const ImageGroupControll = () => {
               </div>
             ))
           }
-          </div>
-          <div className={styles.group_name}>
-            <p>
-              Tamanho:
-              <span>{sku.size}</span>
-            </p>
-          </div>
-          <div className={styles.group_item}>
-            {
+                </div>
+                <div className={styles.group_name}>
+                  <p>
+                    Tamanho:
+                    <span>{sku.size}</span>
+                  </p>
+                </div>
+                <div className={styles.group_item}>
+                  {
             vars.map((itemSku, idx) => (
               <div>
                 <button type="button" onClick={() => handleVars(idx)}>{itemSku.size}</button>
               </div>
             ))
           }
-          </div>
-        </div>
-      </div>
+                </div>
+              </div>
+            </div>
+            <Box marginTop={2} display="flex" justifyContent="center">
+              <Button type="button" variant="contained" onClick={() => handleEditGroup(group)}>Editar Grupo</Button>
+            </Box>
+            <Box display="flex" justifyContent="center" style={{ padding: '1rem 0' }}>
+              <Button type="button" variant="contained" color="primary" onClick={() => router.push(`/dashboard/products/create/group?bid=${bid}&pid=${pid}`)}>Adicionar Novas Cores / Variáveis</Button>
+            </Box>
+          </>
+        )
+      }
+      </Box>
     </>
   );
 };
@@ -160,16 +216,23 @@ export default function EditProduct() {
 
   const classes = useStyles();
 
+  const handleEditGroup = (group) => {
+    const gid = editingProduct.imageGroup.findIndex((item) => group.id === item.id);
+    router.push(`/dashboard/products/editgroup?bid=${bid}&pid=${pid}&gid=${gid}`);
+  };
+
   const handleBack = () => {
     router.push(`/dashboard/products?bid=${bid}`);
   };
 
   const handleSubmit = async (values) => {
+    const priceNumber = values.price ? values.price.toString().replace(',', '.') : null;
+    const salePriceNumber = values.salePrice ? values.salePrice.toString().replace(',', '.') : null;
     const data = {
       ...editingProduct,
       name: values.name,
       description: values.description,
-      price: { original: values.price, sale: values.salePrice },
+      price: { original: priceNumber, sale: salePriceNumber },
       public: values.public,
       imageGroup: imgGroup,
     };
@@ -202,8 +265,9 @@ export default function EditProduct() {
       setUser({
         ...uToEdit,
       });
+      router.push(`/dashboard/products?bid=${bid}`);
     } catch (error) {
-      console.log('error', error);
+      throw new Error(`${error}`);
     }
   };
 
@@ -236,21 +300,43 @@ export default function EditProduct() {
       </AppBar>
       <Container className={classes.container}>
         {
-          imgGroup[0].images.length > 0 && (
-            <SlidePreview
-              images={imgGroup[imgGroupIdx].images}
-              alt={imgGroup[imgGroupIdx].color.name}
-            />
+          // imgGroup[0].images.length > 0 && (
+          //   <SlidePreview
+          //     images={imgGroup[imgGroupIdx].images}
+          //     alt={imgGroup[imgGroupIdx].color.name}
+          //   />
+          // )
+        }
+        {
+          editingProduct && (
+          <ImageGroupControll
+            singleProduct={editingProduct}
+            handleEditGroup={handleEditGroup}
+            pid={pid}
+            bid={bid}
+          />
           )
         }
 
         <Formik
+          validationSchema={
+            object({
+              name: mixed().when('public', {
+                is: true,
+                then: string().required('Nome é Obrigatório').max(60, 'Máximo 60 caractéres'),
+              }),
+              price: mixed().when('public', {
+                is: true,
+                then: number().required('Preco é obrigatório'),
+              }),
+            })
+          }
           initialValues={initialValues}
           enableReinitialize
           onSubmit={(values) => handleSubmit(values)}
         >
           {
-                  () => (
+                  ({ touched, errors}) => (
 
                     <Form>
                       <Paper>
@@ -260,6 +346,8 @@ export default function EditProduct() {
                               name="name"
                               as={TextField}
                               label="Nome do Produto"
+                              error={touched && errors.name}
+                              helperText={(touched && errors.name) && errors.name}
                             />
                           </FormGroup>
                           <Box marginTop={2}>
@@ -269,6 +357,9 @@ export default function EditProduct() {
                                   name="price"
                                   as={TextField}
                                   label="Preço"
+                                  type="number"
+                                  error={touched && errors.price}
+                                  helperText={(touched && errors.price) && errors.price}
                                 />
                               </Grid>
                               <Grid item xs={6}>
@@ -276,6 +367,9 @@ export default function EditProduct() {
                                   name="salePrice"
                                   as={TextField}
                                   label="Preço Promocional"
+                                  type="number"
+                                  error={touched && errors.salePrice}
+                                  helperText={(touched && errors.salePrice) && errors.salePrice}
                                 />
                               </Grid>
                             </Grid>

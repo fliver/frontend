@@ -13,7 +13,7 @@ const HomePage = ({ data, query }) => {
 export async function getServerSideProps({ query }) {
   const { home } = query;
 
-  const res = await fetch(`${config.domain}/api/account/${home}`);
+  const res = await fetch(`${config.api}/account/${home}`);
   const data = await res.json();
 
   return {

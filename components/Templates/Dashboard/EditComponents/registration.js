@@ -17,6 +17,7 @@ import {
   Box,
   Grid,
   Container,
+  CircularProgress,
 } from '@material-ui/core';
 
 import AppBar from '@material-ui/core/AppBar';
@@ -27,6 +28,8 @@ import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 
 import authApi from '../../../../src/services/api/authApi';
 import useAuthUser from '../../../../src/hooks/useAuthUser';
+
+import NavBarDashBoard from '../../../NavBarDashBoard';
 
 const useStyles = makeStyles(() => ({
   body: {
@@ -219,21 +222,12 @@ export default function Registration({ bid }) {
 
   return (
     <div>
-      <AppBar>
-        <Toolbar>
-          <IconButton edge="start" color="inherit" onClick={handleBack} aria-label="close">
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="h6" className={classes.title}>
-            Informações Cadastrais da Loja
-          </Typography>
-        </Toolbar>
-      </AppBar>
+      <NavBarDashBoard backUrl={`/dashboard/manager?bid=${bid}`} title="Informações Cadastrais" />
       <Container disableGutters className={classes.body}>
         <Typography variant="h6" component="h2">Endereço da Loja</Typography>
         <Typography variant="subtitle2" component="p">O CEP será utilizado para calcular o frete!</Typography>
 
-        <TextField label="CEP" color="secondary" value={cep} onChange={handleCep} fullWidth margin="normal" />
+        <TextField label="CEP" color="primary" value={cep} onChange={handleCep} fullWidth margin="normal" />
         {
             isLoading && <p>Buscando CEP</p>
           }
@@ -259,7 +253,7 @@ export default function Registration({ bid }) {
           initialValues={initialValues}
           onSubmit={(values) => handleSubmit(values)}
         >
-          {({ errors, touched }) => (
+          {({ errors, touched, isSubmitting }) => (
             <Form autoComplete="off">
               <Box marginBottom={2}>
                 <Grid container direction="row" justify="space-between" spacing={3}>
@@ -268,7 +262,7 @@ export default function Registration({ bid }) {
                       name="state"
                       as={TextField}
                       label="Estado"
-                      color="secondary"
+                      color="primary"
                       InputLabelProps={{ shrink: true }}
                       error={touched.state && errors.state}
                       helperText={(touched.state && errors.state) && errors.state}
@@ -280,7 +274,7 @@ export default function Registration({ bid }) {
                       as={TextField}
                       label="Cidade"
                       InputLabelProps={{ shrink: true }}
-                      color="secondary"
+                      color="primary"
                       error={touched.city && errors.city}
                       helperText={(touched.city && errors.city) && errors.city}
                     />
@@ -291,7 +285,7 @@ export default function Registration({ bid }) {
                       as={TextField}
                       label="Bairro"
                       InputLabelProps={{ shrink: true }}
-                      color="secondary"
+                      color="primary"
                       error={touched.district && errors.district}
                       helperText={(touched.district && errors.district) && errors.district}
                     />
@@ -306,7 +300,7 @@ export default function Registration({ bid }) {
                     as={TextField}
                     label="Nome da Rua / Av."
                     InputLabelProps={{ shrink: true }}
-                    color="secondary"
+                    color="primary"
                     error={touched.street && errors.street}
                     helperText={(touched.street && errors.street) && errors.street}
                   />
@@ -321,7 +315,7 @@ export default function Registration({ bid }) {
                     label="Número"
                     id="standard-number"
                     type="number"
-                    color="secondary"
+                    color="primary"
                     error={touched.number && errors.number}
                     helperText={(touched.number && errors.number) && errors.number}
                   />
@@ -332,7 +326,7 @@ export default function Registration({ bid }) {
                       name="complement"
                       as={TextField}
                       label="Complemento (se houver)"
-                      color="secondary"
+                      color="primary"
                       error={touched.complement && errors.complement}
                       helperText={(touched.complement && errors.complement) && errors.complement}
                     />
@@ -352,7 +346,7 @@ export default function Registration({ bid }) {
                     as={TextField}
                     label="Razão Social"
                     InputLabelProps={{ shrink: true }}
-                    color="secondary"
+                    color="primary"
                     error={touched.razaoSocial && errors.razaoSocial}
                     helperText={(touched.razaoSocial && errors.razaoSocial) && errors.razaoSocial}
                   />
@@ -366,7 +360,7 @@ export default function Registration({ bid }) {
                     as={TextField}
                     label="CNPJ"
                     InputLabelProps={{ shrink: true }}
-                    color="secondary"
+                    color="primary"
                     error={touched.CNPJ && errors.CNPJ}
                     helperText={(touched.CNPJ && errors.CNPJ) && errors.CNPJ}
                   />
@@ -380,7 +374,7 @@ export default function Registration({ bid }) {
                     as={TextField}
                     label="inscricaoMunicipal"
                     InputLabelProps={{ shrink: true }}
-                    color="secondary"
+                    color="primary"
                     error={touched.inscricaoMunicipal && errors.inscricaoMunicipal}
                     helperText={(touched.inscricaoMunicipal
                       && errors.inscricaoMunicipal) && errors.inscricaoMunicipal}
@@ -395,7 +389,7 @@ export default function Registration({ bid }) {
                     as={TextField}
                     label="inscricaoEstadual"
                     InputLabelProps={{ shrink: true }}
-                    color="secondary"
+                    color="primary"
                     error={touched.inscricaoEstadual && errors.inscricaoEstadual}
                     helperText={(touched.inscricaoEstadual
                       && errors.inscricaoEstadual) && errors.inscricaoEstadual}
@@ -405,7 +399,15 @@ export default function Registration({ bid }) {
 
               <Box justifyItems="center" justifyContent="center" m={4}>
                 <FormGroup>
-                  <Button type="submit" variant="contained" color="secondary">Salvar Alterações</Button>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    color="primary"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting && <CircularProgress size={24} />}
+                    {!isSubmitting && 'Salvar Alterações'}
+                  </Button>
                 </FormGroup>
 
               </Box>

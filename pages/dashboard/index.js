@@ -4,7 +4,7 @@ import DashboardHome from '../../components/Templates/Dashboard/DashboardHome';
 import authApi from '../../src/services/api/authApi';
 
 const DashboardPage = () => {
-  const { api } = authApi()
+  const { api } = authApi();
   const [data, setData] = useState(null);
 
   useEffect(() => {

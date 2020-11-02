@@ -4,6 +4,7 @@ import {
   Container, Box, Typography, AppBar, Toolbar, IconButton,
 } from '@material-ui/core';
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
+import PhotoCameraIcon from '@material-ui/icons/PhotoCamera';
 import MenuList from '@material-ui/core/MenuList';
 import MenuItem from '@material-ui/core/MenuItem';
 import Paper from '@material-ui/core/Paper';
@@ -18,6 +19,7 @@ import authApi from '../../src/services/api/authApi';
 
 import config from '../../src/config';
 import useAuthUser from '../../src/hooks/useAuthUser';
+import NavVarDashBoard from '../../components/NavBarDashBoard';
 
 const useStyles = makeStyles({
   body: {
@@ -51,6 +53,7 @@ const useStyles = makeStyles({
       display: 'none',
     },
     '& label': {
+      display: 'flex',
       margin: '1rem',
       borderBottom: '1px solid black',
       fontSize: '1rem',
@@ -72,7 +75,9 @@ export default function BusinessManager() {
 
   useEffect(() => {
     const bToEdit = isUser && user.business[bid];
-    let { avatar, basic, registration, shipping } = warning;
+    let {
+      avatar, basic, registration, shipping,
+    } = warning;
     bToEdit && setEditingBusiness(bToEdit);
 
     bToEdit && (
@@ -116,8 +121,6 @@ export default function BusinessManager() {
     let compressedFile;
 
     const imageFile = e.target.files[0];
-    console.log('originalFile instanceof Blob', imageFile instanceof Blob); // true
-    console.log(`originalFile size ${imageFile.size / 1024 / 1024} MB`);
 
     const options = {
       maxSizeMB: 0.200,
@@ -126,13 +129,8 @@ export default function BusinessManager() {
     };
     try {
       compressedFile = await imageCompression(imageFile, options);
-      console.log('compressedFile instanceof Blob', compressedFile instanceof Blob); // true
-      console.log(`compressedFile size ${compressedFile.size / 1024 / 1024} MB`); // smaller than maxSizeMB
-
-      // outPutUrl.push();
-      // await uploadToServer(compressedFile); // write your own logic
     } catch (error) {
-      return console.log(error);
+      return { error };
     }
 
     const imgData = new FormData();
@@ -148,30 +146,25 @@ export default function BusinessManager() {
         setUser(userToUpdate);
       }
     } catch (error) {
-      throw new Error(error.response);
+      console.log(error)
+      // throw new Error(error.response);
     }
   };
 
   return (
     <>
-      <AppBar>
-        <Toolbar>
-          <IconButton edge="start" color="inherit" onClick={handleBack} aria-label="close">
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="h6" className={classes.title}>
-            Gerenciar Loja
-          </Typography>
-        </Toolbar>
-      </AppBar>
+      <NavVarDashBoard backUrl="/dashboard" title="Gerenciar Loja" />
       <Container className={classes.body}>
         <Box>
           <div className={classes.logo}>
-            {editingBusiness && !warning.avatar && <img src={`${config.domain}/static/${editingBusiness.logo}`} alt={`logo ${editingBusiness.businessName}`} />}
+            {editingBusiness && !warning.avatar && <img src={`${config.mediaURL}/${editingBusiness.logo}`} alt={`logo ${editingBusiness.businessName}`} />}
             {warning.avatar && <p className={classes.warning}>{warning.avatar}</p>}
             {warning.avatar && <p>Formato: quadrado</p>}
             <label htmlFor="logo">
               Atualizar Logo
+              <Box marginLeft={1}>
+                <PhotoCameraIcon />
+              </Box>
               <input type="file" id="logo" accept="image/jpg, image/jpeg, image/png, image/gif, image/bmp" onChange={handleAvatar} />
             </label>
           </div>
@@ -249,9 +242,15 @@ export default function BusinessManager() {
             <MenuList>
               <div>
                 <MenuItem className={classes.menuItem}>
-                  <div>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <Typography variant="inherit">O endereço de sua loja é:</Typography>
-                    {editingBusiness && <Typography variant="subtitle2">{`www.fliver.app/${editingBusiness.businessName}`}</Typography>}
+                    {editingBusiness && (
+                      <>
+                        <button type="button" onClick={() => router.push(`/${editingBusiness.businessName}`)}>
+                          <Typography variant="subtitle2">{`www.fliver.app/${editingBusiness.businessName}`}</Typography>
+                        </button>
+                      </>
+                    )}
                   </div>
                   {/* <ShareIcon fontSize="large" color="action" /> */}
                 </MenuItem>

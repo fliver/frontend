@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ArrowForwardIosIcon from '@material-ui/icons/ArrowForwardIos';
 import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
 import config from '../../src/config';
@@ -21,10 +21,14 @@ export default function ImageCarousel({ imgGroup, altPrefix }) {
     }
   };
 
+  useEffect(() => (
+    setImgIdx(0)
+  ), [imgGroup]);
+
   return (
     <div className={styles.container}>
       <div className={styles.wrap}>
-        <img src={`${config.domain}/static/${imgGroup[imgIdx]}`} alt={`${altPrefix} ${imgIdx}`} />
+        <img src={`${config.mediaURL}/${imgGroup[imgIdx]}`} alt={`${altPrefix} ${imgIdx}`} />
       </div>
       <div className={styles.controller}>
         <div className={styles.controller_btn}>

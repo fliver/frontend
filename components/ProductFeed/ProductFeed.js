@@ -13,6 +13,7 @@ import AddShoppingCartIcon from '@material-ui/icons/AddShoppingCart';
 import { CartContext } from '../../src/contexts/CartContext';
 import getProductMainImage from '../../src/utils/getProductMainImage';
 import config from '../../src/config';
+import DisplayPrice from '../DisplayPrice';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -60,15 +61,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const ProductFeed = ({ account, products }) => {
-  const { addProduct, cartProducts } = useContext(CartContext);
   const classes = useStyles();
-
-  const getPrice = (displayProduct) => {
-    if (displayProduct.price.isSale) {
-      return `de R$${displayProduct.price.original} por R$${displayProduct.price.final}`;
-    }
-    return `R$${displayProduct.price.original}`;
-  };
 
   return (
     <div className={classes.root}>
@@ -86,18 +79,16 @@ const ProductFeed = ({ account, products }) => {
               <CardMedia
                 className={classes.media}
                 component="img"
-                image={`${config.domain}/static/${getProductMainImage(product)}`}
+                image={`${config.mediaURL}/${getProductMainImage(product)}`}
                 title={product.name}
               />
             </a>
           </Link>
 
           <CardContent>
-            <Typography variant="body2" color="textSecondary" component="p">
-              {getPrice(product)}
-            </Typography>
+            <DisplayPrice textVariant="subtitle1" price={product.price} />
           </CardContent>
-          <CardActions disableSpacing>
+          {/* <CardActions disableSpacing>
             <IconButton
               aria-label="add to cart"
               className={
@@ -106,11 +97,13 @@ const ProductFeed = ({ account, products }) => {
                 ) && classes.cartIconHighLight}
                   `
                 }
-              onClick={() => addProduct({ singleProduct: product, sku: product.vars[0] })}
+              onClick={() => addProduct({
+                singleProduct: product, sku: product.vars[0], businessSlug: account.businessName,
+              })}
             >
               <AddShoppingCartIcon />
             </IconButton>
-          </CardActions>
+          </CardActions> */}
         </Card>
       ))}
     </div>

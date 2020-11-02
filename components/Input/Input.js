@@ -10,7 +10,7 @@ export default function Input({
       id="standard-basic"
       label={label}
       value={value}
-      color="secondary"
+      color="primary"
       onChange={handleChange}
     />
   );

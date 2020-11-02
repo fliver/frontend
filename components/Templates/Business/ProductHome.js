@@ -10,9 +10,10 @@ import setVarsBasedOnImgGroup from '../../../src/utils/setVarsBasedOnImgGroup';
 import ProductFeed from '../../ProductFeed/ProductFeed';
 
 import { BusinessContext } from '../../../src/contexts/BusinessContext';
+import DisplayPrice from '../../DisplayPrice';
 
 export default function ProductHome({ data, singleProduct }) {
-  const { setBusiness } = useContext(BusinessContext);
+  const { business, setBusiness } = useContext(BusinessContext);
   const { account, products } = data;
   const { addProduct } = useContext(CartContext);
 
@@ -28,7 +29,17 @@ export default function ProductHome({ data, singleProduct }) {
   };
 
   useEffect(() => {
-    setBusiness(data);
+    const bidx = business.findIndex(
+      (item) => item.account.businessName === data.account.businessName,
+    );
+
+    if (bidx >= 0) {
+      const updatedbArray = business;
+      updatedbArray[bidx] = data;
+      setBusiness(updatedbArray);
+    } else {
+      setBusiness([...business, data]);
+    }
   }, []);
 
   useEffect(() => {
@@ -45,13 +56,6 @@ export default function ProductHome({ data, singleProduct }) {
     const [initialsku] = setVarsBasedOnImgGroup(singleProduct);
     setSku(initialsku);
   }, [singleProduct]);
-
-  const getPrice = () => {
-    if (singleProduct.price.isSale) {
-      return `de R$${singleProduct.price.original} por R$${singleProduct.price.final}`;
-    }
-    return `R$${singleProduct.price.original}`;
-  };
 
   const handleOtherProducts = (currentProduct) => (
     products.filter((product) => product._id !== currentProduct._id)
@@ -74,7 +78,7 @@ export default function ProductHome({ data, singleProduct }) {
         <div className={styles.product_content}>
           <div>
             <h1>{singleProduct.name}</h1>
-            <h2>{getPrice()}</h2>
+            <DisplayPrice variantText="h2" price={singleProduct.price} />
           </div>
           <div className={styles.group_wrap}>
             <div className={styles.group_name}>
@@ -86,7 +90,7 @@ export default function ProductHome({ data, singleProduct }) {
             <div className={styles.group_item}>
               {
             singleProduct.imageGroup.map((item, idx) => (
-              <div>
+              <div key={item.color.code}>
                 <style jsx>
                   {`
                 .btn_color {
@@ -108,7 +112,7 @@ export default function ProductHome({ data, singleProduct }) {
             <div className={styles.group_item}>
               {
             vars.map((itemSku, idx) => (
-              <div>
+              <div key={itemSku.size}>
                 <button type="button" onClick={() => handleVars(idx)}>{itemSku.size}</button>
               </div>
             ))
@@ -122,7 +126,7 @@ export default function ProductHome({ data, singleProduct }) {
         <h2> Mais Produtos </h2>
         <ProductFeed account={account} products={handleOtherProducts(singleProduct)} />
         <div className={styles.view_add_button}>
-          <button type="button" onClick={() => addProduct({ singleProduct, sku })}>Comprar</button>
+          <button type="button" onClick={() => addProduct({ singleProduct, sku, businessSlug: account.businessName })}>Comprar</button>
         </div>
       </Container>
       {/* <FilterSection

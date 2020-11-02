@@ -1,8 +1,10 @@
 import axios from 'axios';
 import { useCallback } from 'react';
+import Router from 'next/router';
 import apiDomain from '../../config';
 
 const authApi = () => {
+  // const router = useRouter();
   const getToken = useCallback(() => {
     const localToken = localStorage.getItem('token');
     if (!localToken) throw new Error('Token is missing');
@@ -15,7 +17,7 @@ const authApi = () => {
       const token = getToken();
       const result = await axios({
         method,
-        url: `${apiDomain.domain}/api/${url}`,
+        url: `${apiDomain.api}/${url}`,
         data: data && data,
         headers: {
           Authorization: `Bearer ${token}`,
@@ -23,8 +25,11 @@ const authApi = () => {
       });
       return result;
     } catch (error) {
-      console.log('api error', error.response)
-      throw new Error(`${error.response.data.message}`);
+      if (error.response.data.status === 401) {
+        Router.push('/login');
+      } else {
+        throw new Error(`${error.response.data.message}`);
+      }
     }
   };
 

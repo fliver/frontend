@@ -59,9 +59,10 @@ export function CepField(props) {
   );
 }
 
-export default function FullScreenDialog({ isOpen, handleClose, setSelectedShipping }) {
+export default function FullScreenDialog({
+  isOpen, handleClose, setSelectedShipping, currentBusiness,
+}) {
   const { user, setUser } = useContext(UserContext);
-  const { business } = useContext(BusinessContext);
 
   const [open, setOpen] = useState(false);
   const [cep, setCep] = useState('');
@@ -90,14 +91,14 @@ export default function FullScreenDialog({ isOpen, handleClose, setSelectedShipp
   };
 
   const getShippingOptions = async () => {
-    const sCepOrigem = !isEmptyObject(business) ? business.account.address.CEP.split('-').join('') : '0';
+    if (!currentBusiness.account.shipping.thirdParty.isActive.correios.available) return false;
+    const sCepOrigem = currentBusiness ? currentBusiness.account.address.CEP.split('-').join('') : '0';
     const sCepDestino = cep.split('-').join('');
 
-    setIsLoading(true);
-    const myInterval = setInterval(() => {
-    }, 100);
-
-    const { promiseOrTimeout, timeoutId } = awaitPromiseForInstant(api.post(
+    const {
+      promiseOrTimeout: promiseShipping,
+      timeoutId: timeoutShipping,
+    } = awaitPromiseForInstant(api.post(
       '/cart/shipping_calculate',
       {
         sCepDestino,
@@ -106,13 +107,40 @@ export default function FullScreenDialog({ isOpen, handleClose, setSelectedShipp
     ), 25000);
 
     try {
+      const res = await promiseShipping;
+      return res;
+      // setShipping({
+      //   ...res.data,
+      //   status: res.data.types.length > 0,
+      // });
+    } catch (error) {
+      return { status: false };
+      // setShipping({ status: false });
+    } finally {
+      clearTimeout(timeoutShipping);
+    }
+  };
+
+  const getUserAddress = async () => {
+    const sCepDestino = cep.split('-').join('');
+
+    setIsLoading(true);
+    // get address
+    const { promiseOrTimeout, timeoutId } = awaitPromiseForInstant(api.post(
+      'cart/consulta_cep',
+      {
+        cep: sCepDestino,
+      },
+    ), 25000);
+
+    try {
       const res = await promiseOrTimeout;
 
       setInitialValues({
-        state: res.data.address.uf,
-        city: res.data.address.localidade,
-        district: res.data.address.bairro,
-        street: res.data.address.logradouro,
+        state: res.data.uf,
+        city: res.data.localidade,
+        district: res.data.bairro,
+        street: res.data.logradouro,
         cep: sCepDestino,
         number: '',
         complement: '',
@@ -121,10 +149,8 @@ export default function FullScreenDialog({ isOpen, handleClose, setSelectedShipp
         firstname: '',
         lastname: '',
       });
-      setShipping({
-        ...res.data,
-        status: res.data.types.length > 0,
-      });
+      setShipping({ status: false });
+      setIsLoading(false);
     } catch (error) {
       setInitialValues({
         state: '',
@@ -140,14 +166,21 @@ export default function FullScreenDialog({ isOpen, handleClose, setSelectedShipp
         lastname: '',
       });
       setShipping({ status: false });
+      setIsLoading(false);
     } finally {
-      clearInterval(myInterval);
+      setIsLoading(false);
       clearTimeout(timeoutId);
     }
-    setIsLoading(false);
+
+    // get pac and sedex while user is finishing form address
+    const shippingOptions = await getShippingOptions();
+    setShipping({
+      ...shippingOptions.data,
+      status: shippingOptions.status,
+    });
   };
 
-  const handleSubmit = (values) => {
+  const handleSubmit = async (values) => {
     const billingAddress = {
       state: values.state,
       city: values.city,
@@ -159,8 +192,28 @@ export default function FullScreenDialog({ isOpen, handleClose, setSelectedShipp
     };
     const { firstname, lastname } = values;
 
+    const notUpdatedCarts = user.carts
+      ? user.carts.filter((item) => item.business !== currentBusiness.account.businessName) : [];
+
+    const shippingRequest = async () => {
+      const { data } = await getShippingOptions();
+      return data;
+    };
+
+    const shippingOptions = shipping || await shippingRequest();
+    const updatedCart = {
+      business: currentBusiness.account.businessName,
+      shipping: {
+        ...shippingOptions,
+        status: shippingOptions.status,
+      },
+    };
+
     setUser({
-      shipping, billingAddress, firstname, lastname,
+      firstname,
+      lastname,
+      billingAddress,
+      carts: [...notUpdatedCarts, updatedCart],
     });
     setSelectedShipping({ type: null });
     handleClose();
@@ -176,7 +229,7 @@ export default function FullScreenDialog({ isOpen, handleClose, setSelectedShipp
   }, [user]);
 
   useEffect(() => {
-    cep.length === 9 && getShippingOptions();
+    cep.length === 9 && getUserAddress();
   }, [cep]);
 
   useEffect(() => {
@@ -200,7 +253,7 @@ export default function FullScreenDialog({ isOpen, handleClose, setSelectedShipp
           </Toolbar>
         </AppBar>
         <Container>
-          <TextField label="CEP" color="secondary" value={cep} onChange={handleCep} fullWidth margin="normal" />
+          <TextField label="CEP" color="primary" value={cep} onChange={handleCep} fullWidth margin="normal" />
           {
             isLoading && <p>Buscando CEP</p>
           }
@@ -213,10 +266,10 @@ export default function FullScreenDialog({ isOpen, handleClose, setSelectedShipp
               object({
                 state: string().required('Obrigatório').max(2, 'máximo 2 caracteres').min(2, 'mínimo 2 caracteres'),
                 city: string().required('Obrigatório').max(20, 'máximo 20 caracteres').min(2, 'mínimo 2 caracteres'),
-                district: string().required('Obrigatório').max(20, 'máximo 20 caracteres').min(2, 'mínimo 2 caracteres'),
-                street: string().required('Obrigatório').max(20, 'máximo 20 caracteres').min(2, 'mínimo 2 caracteres'),
+                district: string().required('Obrigatório').max(60, 'máximo 60 caracteres').min(2, 'mínimo 2 caracteres'),
+                street: string().required('Obrigatório').max(60, 'máximo 60 caracteres').min(2, 'mínimo 2 caracteres'),
                 number: number().required('Obrigatório'),
-                complement: string().required('Obrigatório').max(100, 'máximo 100 caracteres'),
+                complement: string().max(100, 'máximo 100 caracteres'),
                 terms: boolean('Obrigatório').oneOf([true]),
                 firstname: string().required('Obrigatório').max(30, 'máximo 30 caracteres'),
                 lastname: string().required('Obrigatório').max(30, 'máximo 30 caracteres'),
@@ -235,7 +288,7 @@ export default function FullScreenDialog({ isOpen, handleClose, setSelectedShipp
                         name="state"
                         as={TextField}
                         label="Estado"
-                        color="secondary"
+                        color="primary"
                         InputLabelProps={{ shrink: true }}
                         error={touched.state && errors.state}
                         helperText={(touched.state && errors.state) && errors.state}
@@ -247,7 +300,7 @@ export default function FullScreenDialog({ isOpen, handleClose, setSelectedShipp
                         as={TextField}
                         label="Cidade"
                         InputLabelProps={{ shrink: true }}
-                        color="secondary"
+                        color="primary"
                         error={touched.city && errors.city}
                         helperText={(touched.city && errors.city) && errors.city}
                       />
@@ -258,7 +311,7 @@ export default function FullScreenDialog({ isOpen, handleClose, setSelectedShipp
                         as={TextField}
                         label="Bairro"
                         InputLabelProps={{ shrink: true }}
-                        color="secondary"
+                        color="primary"
                         error={touched.district && errors.district}
                         helperText={(touched.district && errors.district) && errors.district}
                       />
@@ -273,7 +326,7 @@ export default function FullScreenDialog({ isOpen, handleClose, setSelectedShipp
                       as={TextField}
                       label="Nome da Rua / Av."
                       InputLabelProps={{ shrink: true }}
-                      color="secondary"
+                      color="primary"
                       error={touched.street && errors.street}
                       helperText={(touched.street && errors.street) && errors.street}
                     />
@@ -288,7 +341,7 @@ export default function FullScreenDialog({ isOpen, handleClose, setSelectedShipp
                       label="Número"
                       id="standard-number"
                       type="number"
-                      color="secondary"
+                      color="primary"
                       error={touched.number && errors.number}
                       helperText={(touched.number && errors.number) && errors.number}
                     />
@@ -299,7 +352,7 @@ export default function FullScreenDialog({ isOpen, handleClose, setSelectedShipp
                         name="complement"
                         as={TextField}
                         label="Aprto / Bloco"
-                        color="secondary"
+                        color="primary"
                         error={touched.complement && errors.complement}
                         helperText={(touched.complement && errors.complement) && errors.complement}
                       />
@@ -314,7 +367,7 @@ export default function FullScreenDialog({ isOpen, handleClose, setSelectedShipp
                         name="firstname"
                         as={TextField}
                         label="Nome"
-                        color="secondary"
+                        color="primary"
                         error={touched.firstname && errors.firstname}
                         helperText={(touched.firstname && errors.firstname) && errors.firstname}
                       />
@@ -324,7 +377,7 @@ export default function FullScreenDialog({ isOpen, handleClose, setSelectedShipp
                         name="lastname"
                         as={TextField}
                         label="Sobrenome"
-                        color="secondary"
+                        color="primary"
                         error={touched.lastname && errors.lastname}
                         helperText={(touched.lastname && errors.lastname) && errors.lastname}
                       />
@@ -342,7 +395,7 @@ export default function FullScreenDialog({ isOpen, handleClose, setSelectedShipp
 
                 <Box justifyItems="center" justifyContent="center">
                   <FormGroup>
-                    <Button type="submit" color="secondary">Finalizar</Button>
+                    <Button type="submit" variant="contained" color="primary">Finalizar</Button>
                   </FormGroup>
 
                 </Box>

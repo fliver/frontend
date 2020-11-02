@@ -33,39 +33,14 @@ import {
   ListItemText,
   Grid,
   MobileStepper,
+  FormGroup,
+  CircularProgress,
 } from '@material-ui/core';
 
 import imageCompression from 'browser-image-compression';
 import authApi from '../../../../src/services/api/authApi';
 import useAuthUser from '../../../../src/hooks/useAuthUser';
-
-const imgTest = [
-  {
-    label: 'San Francisco – Oakland Bay Bridge, United States',
-    imgPath:
-      'http://localhost:5000/static/eSkxYfaPx/products/38879655c9138b481aff-fv-g01-azul-01.jpeg',
-  },
-  {
-    label: 'Bird',
-    imgPath:
-      'https://images.unsplash.com/photo-1538032746644-0212e812a9e7?auto=format&fit=crop&w=400&h=250&q=60',
-  },
-  {
-    label: 'Bali, Indonesia',
-    imgPath:
-      'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=400&h=250&q=80',
-  },
-  {
-    label: 'NeONBRAND Digital Marketing, Las Vegas, United States',
-    imgPath:
-      'https://images.unsplash.com/photo-1518732714860-b62714ce0c59?auto=format&fit=crop&w=400&h=250&q=60',
-  },
-  {
-    label: 'Goč, Serbia',
-    imgPath:
-      'https://images.unsplash.com/photo-1512341689857-198e7e2f3ca8?auto=format&fit=crop&w=400&h=250&q=60',
-  },
-];
+import editArray from '../../../../src/utils/editArray';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -126,7 +101,11 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function getSteps(color) {
-  return ['Informe a Cor Principal das Imagens Desse Grupo', `Adicione as Imagens do Produto com a Cor ${color.name}`, 'Adicione as Variáveis Deste Grupo'];
+  return ['Informe abaixo a cor disponível deste produto - Você poderá adicionar mais cores após SALVAR este produto', `Adicione as Imagens do Produto com a Cor ${color.name}`, `Adicione as Variáveis Deste Produto com a cor ${color.name} `];
+}
+
+function getStepsNewColor(color) {
+  return ['Informe uma nova opção de cor para este produto', `Adicione as Imagens do Produto com a Cor ${color.name}`, `Adicione as Variáveis Deste Produto com a cor ${color.name} `];
 }
 
 function GroupColor() {
@@ -183,22 +162,28 @@ function GroupColor() {
 
 export default function CreateImgGroup() {
   const { user, setUser } = useAuthUser();
-  const [color, setColor] = useState({ hex: '#2874A6', name: 'azul' });
+  const [color, setColor] = useState({ hex: '#2874A6', name: '' });
   const [displayColor, setDisplayColor] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
   const [images, setImages] = useState([]);
   const [sizes, setSizes] = useState([]);
   const [slideActive, setSlideActive] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [variant, setVariant] = useState('');
 
-  const { query: { bn, bid } } = useRouter();
+  const { query: { bn, bid, pid } } = useRouter();
   const router = useRouter();
 
-  const steps = getSteps(color);
-  const maxSlides = imgTest.length;
+  const steps = pid ? getStepsNewColor(color) : getSteps(color);
 
   const classes = useStyles();
 
   const { api } = authApi();
+  const {
+    handleMoveBack,
+    handleMoveNext,
+    handleItemRemove,
+  } = editArray();
 
   const handleColorChange = (hexColor) => {
     setColor({
@@ -222,8 +207,6 @@ export default function CreateImgGroup() {
 
   async function handleImageUpload(event) {
     const imageFile = event.target.files[0];
-    console.log('originalFile instanceof Blob', imageFile instanceof Blob); // true
-    console.log(`originalFile size ${imageFile.size / 1024 / 1024} MB`);
 
     const options = {
       maxSizeMB: 0.200,
@@ -232,28 +215,25 @@ export default function CreateImgGroup() {
     };
     try {
       const compressedFile = await imageCompression(imageFile, options);
-      console.log('compressedFile instanceof Blob', compressedFile instanceof Blob); // true
-      console.log(`compressedFile size ${compressedFile.size / 1024 / 1024} MB`); // smaller than maxSizeMB
 
-      // outPutUrl.push();
-      console.log('compressedFile', compressedFile)
-      console.log('url:', URL.createObjectURL(compressedFile));
       const imgData = new FormData();
       imgData.append('images', imgData);
       setImages([...images, compressedFile]);
       // await uploadToServer(compressedFile); // write your own logic
     } catch (error) {
-      console.log(error);
+      throw new Error(`${error}`);
     }
   }
 
   const handleSizeSubmit = (value) => {
-    setSizes([...sizes, value]);
+    const sizesToAdd = value.trim().split(',').map((item) => ({ size: item }));
+    setSizes([...sizes, ...sizesToAdd]);
+    setVariant('');
   };
 
   const ImagesListSection = () => (
     <Box className={classes.groupImageSection}>
-      { images.length > 0 && images.map((img) => (
+      { images.length > 0 && images.map((img, idx) => (
         <List key={URL.createObjectURL(img)} className={classes.listContent}>
           <ListItem>
             <Typography variant="caption" component="h3">1</Typography>
@@ -264,17 +244,17 @@ export default function CreateImgGroup() {
             />
           </ListItem>
           <ListItem>
-            <IconButton aria-label="up">
+            <IconButton aria-label="up" disabled={idx === 0} onClick={() => setImages(handleMoveBack(images, idx))}>
               <ArrowUpwardIcon />
             </IconButton>
           </ListItem>
           <ListItem>
-            <IconButton aria-label="down">
+            <IconButton aria-label="down" disabled={idx === images.length - 1} onClick={() => setImages(handleMoveNext(images, idx))}>
               <ArrowDownwardIcon />
             </IconButton>
           </ListItem>
           <ListItem>
-            <IconButton aria-label="remove" edge="end">
+            <IconButton aria-label="remove" edge="end" disabled={images.length === 1} onClick={() => setImages(handleItemRemove(images, idx))}>
               <DeleteIcon />
             </IconButton>
           </ListItem>
@@ -295,16 +275,28 @@ export default function CreateImgGroup() {
           <IconButton>
             <AddCircleIcon />
           </IconButton>
-          <input style={{ display: 'none' }} type="file" id="add_images" accept="image/jpg, image/jpeg, image/png, image/gif, image/bmp" onChange={handleImageUpload} multiple />
+          <input style={{ display: 'none' }} type="file" id="add_images" accept="image/jpg, image/jpeg, image/png, image/gif, image/bmp" onChange={handleImageUpload} />
         </label>
       </Box>
     </Box>
   );
 
   // const GroupImagesVariant = () => (
-    
+
   // );
 
+  function getStepsError(idx) {
+    switch (idx) {
+      case 0:
+        return color.name === '';
+      case 1:
+        return images.length === 0;
+      case 2:
+        return sizes.length === 0;
+      default:
+        return true;
+    }
+  }
   const getStepContent = (step) => {
     switch (step) {
       case 0:
@@ -316,8 +308,8 @@ export default function CreateImgGroup() {
                 onChange={(e) => setColor({ ...color, name: e.target.value })}
                 placeholder="Ex.: Azul"
                 InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end" onClick={() => setDisplayColor(true)}>
+                  startAdornment: (
+                    <InputAdornment position="start" onClick={() => setDisplayColor(true)}>
                       <ColorButtonSection />
                     </InputAdornment>),
                 }}
@@ -339,50 +331,70 @@ export default function CreateImgGroup() {
       case 2:
         return (
           <div className={classes.listContent}>
-      <div>
-        <div>
-          {
-            sizes.length > 0 && sizes.map((item) => (
+            <div>
+              <div>
+                {
+            sizes.length > 0 && sizes.map((item, idx) => (
               <div key={item.size} className={classes.variationItem}>
                 <ListItemText
                   primary={`Tamanho: ${item.size}`}
                 />
-                <IconButton aria-label="Remove" edge="start">
+                <IconButton aria-label="Remove" edge="start" onClick={() => setSizes(handleItemRemove(sizes, idx))}>
                   <DeleteIcon />
                 </IconButton>
               </div>
             ))
           }
 
-        </div>
-        <Box marginTop={4} marginBottom={4}>
-          <div className={classes.variationItem}>
-            <Formik initialValues={{ size: '' }} onSubmit={(e) => handleSizeSubmit(e)}>
-              {
+              </div>
+              <Box marginTop={4} marginBottom={4}>
+                <div className={classes.variationItem}>
+                  {/* <Formik
+                    enableReinitialize
+                    initialValues={variantInitialValue}
+                    onSubmit={(e) => handleSizeSubmit(e)}
+                  >
+                    {
                 () => (
                   <Form>
                     <Field
                       name="size"
                       as={TextField}
                       InputLabelProps={{ shrink: true }}
-                      placeholder="Ex.: 36, 45cm, único"
+                      placeholder="Ex.: 36, GG, 45cm, único"
                       label="Tamanho"
                       color="primary"
                       variant="outlined"
+                      style={{ width: '13rem' }}
                     />
-
                     <IconButton type="submit" aria-label="Add">
                       <AddCircleIcon />
                     </IconButton>
                   </Form>
                 )
               }
-            </Formik>
-          </div>
-        </Box>
-      </div>
+                  </Formik> */}
+                  <FormControl>
+                    <TextField
+                      value={variant}
+                      onChange={(e) => setVariant(e.target.value)}
+                      InputLabelProps={{ shrink: true }}
+                      placeholder="Ex.: 36, GG, 45cm, único"
+                      label="Tamanho"
+                      color="primary"
+                      variant="outlined"
+                      style={{ width: '13rem' }}
+                    />
+                  </FormControl>
 
-    </div>
+                  <IconButton type="button" aria-label="Add" disabled={variant === ''} onClick={() => handleSizeSubmit(variant)}>
+                    <AddCircleIcon />
+                  </IconButton>
+                </div>
+              </Box>
+            </div>
+
+          </div>
         );
       default:
         return 'Unknown step';
@@ -397,61 +409,6 @@ export default function CreateImgGroup() {
     setSlideActive((prevSlideActive) => prevSlideActive - 1);
   };
 
-  const ImageSection = () => (
-    <Box className={classes.groupImageSection}>
-      <Box style={{ padding: '1rem 0' }}>
-        <Typography variant="subtitle1" component="h3" align="center">Pré-visualização do grupo de imagens</Typography>
-      </Box>
-      <>
-        <div className={classes.imgSection}>
-          <MobileStepper
-            position="static"
-            backButton={(
-          (
-            <Button size="small" onClick={handleBackSlide} disabled={slideActive === 0}>
-              <KeyboardArrowLeft />
-              Voltar
-            </Button>
-)
-        )}
-          />
-          <img
-            className={classes.cover}
-            src={imgTest[slideActive].imgPath}
-            alt={imgTest[slideActive].label}
-          />
-          {/* <CardMedia
-        className={classes.cover}
-        image={tutorialSteps[activeStep].imgPath}
-        title={tutorialSteps[activeStep].label}
-      /> */}
-
-          <MobileStepper
-            position="static"
-            nextButton={
-          (
-            <Button size="small" onClick={handleNextSlide} disabled={slideActive === maxSlides - 1}>
-              próxima
-              <KeyboardArrowRight />
-            </Button>
-)
-        }
-          />
-        </div>
-        {/* <MobileStepper
-          steps={maxSteps}
-          position="static"
-          variant="text"
-          activeStep={activeStep}
-        /> */}
-        <Box display="flex" justifyContent="center" style={{ padding: '1rem 0' }}>
-          <Button type="button" color="secondary">Remover Imagens</Button>
-          <Button type="button" color="secondary">Adicionar Imagens</Button>
-        </Box>
-      </>
-    </Box>
-  );
-
   const handleNext = () => {
     setActiveStep((prevActiveStep) => prevActiveStep + 1);
   };
@@ -465,6 +422,7 @@ export default function CreateImgGroup() {
   };
 
   const handleCreate = async () => {
+    setLoading(true);
     const imagesData = new FormData();
     images.forEach((image) => {
       imagesData.append('images', image);
@@ -474,10 +432,10 @@ export default function CreateImgGroup() {
       const result = await api('POST', `/product/${bn}/create`, imagesData);
       const { createdProduct } = result.data;
       const productId = createdProduct._id;
-      const vars = sizes.map((variant) => (
+      const vars = sizes.map((item) => (
         {
           ...createdProduct.vars[0],
-          size: variant.size,
+          size: item.size,
         }
       ));
 
@@ -500,15 +458,66 @@ export default function CreateImgGroup() {
         ...business,
       });
       const idx = business[bid].productsData.length - 1;
+      setLoading(false);
       router.push(`/dashboard/products/edit?bid=${bid}&pid=${idx}`);
     } catch (error) {
-      console.log('update error ', error);
-      // throw new Error(error.response);
+      setLoading(false);
+      throw new Error(error.response);
+    }
+  };
+
+  const handleAdd = async () => {
+    setLoading(true);
+    const imagesData = new FormData();
+    images.forEach((image) => {
+      imagesData.append('images', image);
+    });
+
+    try {
+      const result = await api('PATCH', `/product/${user.business[bid].businessName}/create/imgGroup/${user.business[bid].productsData[pid]._id}`, imagesData);
+      const { updatedProduct, imgGroupId } = result.data;
+      const newVars = sizes.map((variantSize) => (
+        {
+          imageGroupId: imgGroupId,
+          size: variantSize.size,
+        }
+      ));
+      const groupIdx = updatedProduct.imageGroup.findIndex((item) => item.id === imgGroupId);
+      updatedProduct.imageGroup[groupIdx] = {
+        ...updatedProduct.imageGroup[groupIdx],
+        color: {
+          name: color.name,
+          code: color.hex,
+        },
+      };
+
+      const productNewData = {
+        ...updatedProduct,
+        vars: [...updatedProduct.vars, ...newVars],
+      };
+
+      try {
+        const updated = await api('PATCH', `/product/${user.business[bid].businessName}/update/content/${updatedProduct._id}`, { productNewData });
+        const { business } = user;
+        business[bid].productsData[pid] = updated.data;
+        setUser({
+          ...user,
+          ...business,
+        });
+        setLoading(false);
+        router.back();
+      } catch (error) {
+        setLoading(false);
+        throw new Error(`${error}`);
+      }
+    } catch (error) {
+      setLoading(false);
+      throw new Error(error.response);
     }
   };
 
   const handleClose = () => {
-    router.push(`/dashboard/products?bid=${bid}`);
+    pid ? router.back() : router.push(`/dashboard/products?bid=${bid}`);
   };
 
   return (
@@ -520,7 +529,7 @@ export default function CreateImgGroup() {
             <CancelIcon />
           </IconButton>
           <Typography variant="h6" className={classes.title}>
-            Criar Novo Grupo de Imagens
+            {pid ? 'Adicionar Nova Cor' : 'Criar Novo Produto'}
           </Typography>
         </Toolbar>
       </AppBar>
@@ -544,6 +553,7 @@ export default function CreateImgGroup() {
                     color="primary"
                     onClick={handleNext}
                     className={classes.button}
+                    disabled={getStepsError(index)}
                   >
                     {/* {activeStep === steps.length - 1 ? 'Finalizar' : 'Próximo'} */}
                     Próximo
@@ -560,9 +570,20 @@ export default function CreateImgGroup() {
           {/* <ImageSection /> */}
           <Paper>
             <Box padding={2} display="flex" flexDirection="column" justifyContent="center" alignItems="center">
-              <Button onClick={handleCreate} variant="contained" color="primary" className={classes.button}>
-                Criar Grupo de Imagens
-              </Button>
+              {
+                pid ? (
+                  <Button onClick={handleAdd} variant="contained" disabled={loading} color="primary" className={classes.button}>
+                    {loading && <CircularProgress size={24} /> }
+                    {!loading && 'Salvar Nova Cor e Variáveis'}
+                  </Button>
+                ) : (
+                  <Button onClick={handleCreate} variant="contained" disabled={loading} color="primary" className={classes.button}>
+                    {loading && <CircularProgress size={24} /> }
+                    {!loading && 'Salvar Novo Produto'}
+                  </Button>
+                )
+              }
+
               <Button onClick={handleReset} className={classes.button}>
                 Revisar
               </Button>
