@@ -52,7 +52,7 @@ const NavBar = (props) => {
 
   return (
     <div className={classes.grow}>
-      <AppBar position="relative" className={classes.nav}>
+      <AppBar position="relative" className={classes.nav} color="inherit">
         <Toolbar className={classes.sectionIconButton} disableGutters>
 
           {/* <IconButton

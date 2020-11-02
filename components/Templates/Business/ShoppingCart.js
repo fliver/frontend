@@ -86,7 +86,7 @@ const useStyles = makeStyles((theme) => ({
     height: 90,
   },
   orderButtonContainer: {
-    position: 'fixed',
+    position: 'relative',
     width: 'inherit',
     maxWidth: 'inherit',
     bottom: 0,
@@ -186,7 +186,7 @@ export default function ShoppingCart({ currentBusinessSlug }) {
   const handleWhatsAppOrder = () => {
     const whatsapp = currentBusiness ? currentBusiness.account.whatsapp : '';
     const businessName = currentBusiness ? currentBusiness.account.businessName : '';
-    const productsOrder = currentCart.products.map((product) => `%2A-+C%C3%B3digo+do+produto%3A%2A+${product.vars.id}%0D%0A%2A-+Produto%3A%2A+${product.name}%0D%0A%2A-+Quantidade%3A%2A+${product.quantity}%0D%0A%2A-+Cor%3A%2A+${product.imageGroup.color.name}%0D%0A%2A-+Tamanho%3A%2A+${product.vars.size}%0D%0A%2A-+Pre%C3%A7o%3A%2A+${product.price.original}%0D%0A%0D%0A`);
+    const productsOrder = currentCart.products.map((product) => `%2A-+C%C3%B3digo+do+produto%3A%2A+${product.vars.id}%0D%0A%2A-+Produto%3A%2A+${product.name}%0D%0A%2A-+Quantidade%3A%2A+${product.quantity}%0D%0A%2A-+Cor%3A%2A+${product.imageGroup.color.name}%0D%0A%2A-+Tamanho%3A%2A+${product.vars.size}%0D%0A%2A-+Pre%C3%A7o%3A%2A+${product.price.sale || product.price.original}%0D%0A%0D%0A`);
 
     const urlProducts = ''.concat(...productsOrder);
 
@@ -335,50 +335,60 @@ export default function ShoppingCart({ currentBusinessSlug }) {
           {
               !isEmptyObject(user) && user.carts[cartIdx].shipping.status && (
                 <>
-                  <Typography variant="h6" component="h6">
-                    Escolha Forma de Entrega:
-                  </Typography>
-                  {/* <p>Escolha Forma de Entrega:</p> */}
-                  <FormControlLabel
-                    label="Retirar na loja"
-                    control={(
-                      <Radio
-                        color="primary"
-                        checked={selectedShipping.type === 'retirada'}
-                        onChange={() => handleRadioChange({ Codigo: 1, type: 'retirada', Valor: '0,00' })}
-                        value="Retirar na Loja"
-                        name="shippingmethod"
-                        inputProps={{ 'aria-label': 'A' }}
-                      />
-                    )}
-                  />
-                  { selectedShipping.type === 'retirada' && (
-                    <div className={classes.address}>
-                      <div>
-                        <p>{`${currentBusiness.account.address.street}, ${currentBusiness.account.address.number}, ${currentBusiness.account.address.complement}`}</p>
-                        <p>{`CEP: ${currentBusiness.account.address.CEP} - ${currentBusiness.account.address.state}, ${currentBusiness.account.address.city}`}</p>
-                      </div>
-                    </div>
-                  ) }
-                  <div>
-                    {user.carts[cartIdx].shipping.types.map(
-                      (option) => (
+                  {
+                    currentBusiness.account.pickup.isActive && (
+                      <>
+                        <Typography variant="h6" component="h6">
+                          Escolha Forma de Entrega:
+                        </Typography>
+                        {/* <p>Escolha Forma de Entrega:</p> */}
                         <FormControlLabel
-                          label={`R$ ${option.Valor} - ${option.type}: ${option.PrazoEntrega} dias úteis`}
+                          label="Retirar na loja"
                           control={(
                             <Radio
                               color="primary"
-                              checked={selectedShipping.type === option.type}
-                              onChange={() => handleRadioChange(option)}
-                              value={option.type}
+                              checked={selectedShipping.type === 'retirada'}
+                              onChange={() => handleRadioChange({ Codigo: 1, type: 'retirada', Valor: '0,00' })}
+                              value="Retirar na Loja"
                               name="shippingmethod"
                               inputProps={{ 'aria-label': 'A' }}
                             />
                     )}
                         />
-                      ),
+                        { selectedShipping.type === 'retirada' && (
+                        <div className={classes.address}>
+                          <div>
+                            <p>{`${currentBusiness.account.address.street}, ${currentBusiness.account.address.number}, ${currentBusiness.account.address.complement}`}</p>
+                            <p>{`CEP: ${currentBusiness.account.address.CEP} - ${currentBusiness.account.address.state}, ${currentBusiness.account.address.city}`}</p>
+                          </div>
+                        </div>
+                        ) }
+                      </>
+                    )
+                  }
+                  {
+                  currentBusiness.account.shipping.thirdParty.isActive.correios && (
+                    <div>
+                      {user.carts[cartIdx].shipping.types.map(
+                        (option) => (
+                          <FormControlLabel
+                            label={`R$ ${option.Valor} - ${option.type}: ${option.PrazoEntrega} dias úteis`}
+                            control={(
+                              <Radio
+                                color="primary"
+                                checked={selectedShipping.type === option.type}
+                                onChange={() => handleRadioChange(option)}
+                                value={option.type}
+                                name="shippingmethod"
+                                inputProps={{ 'aria-label': 'A' }}
+                              />
                     )}
-                  </div>
+                          />
+                        ),
+                      )}
+                    </div>
+                  )
+                  }
                 </>
               )
                 }
@@ -412,15 +422,23 @@ export default function ShoppingCart({ currentBusinessSlug }) {
       {
         currentBusiness && (
           <div className={classes.orderButtonContainer}>
-        <a
-          className={classes.orderButton}
-          rel="noreferrer"
-          target="_blank"
-          href={handleWhatsAppOrder()}
-        >
-          Enviar Pedido Via WhatsApp
-        </a>
-      </div>
+            {
+              selectedShipping.type ? (
+                <a
+                  className={classes.orderButton}
+                  rel="noreferrer"
+                  target="_blank"
+                  href={handleWhatsAppOrder()}
+                >
+                  Enviar Pedido Via WhatsApp
+                </a>
+              ) : (
+                <p className={classes.orderButton}>
+                  Escolha Forma de Entrega
+                </p>
+              )
+            }
+          </div>
         )
       }
       <FullScreenDialog

@@ -91,7 +91,7 @@ export default function FullScreenDialog({
   };
 
   const getShippingOptions = async () => {
-    if (!currentBusiness.account.shipping.thirdParty.isActive.correios.available) return false;
+    if (!currentBusiness.account.shipping.thirdParty.isActive.correios) return false;
     const sCepOrigem = currentBusiness ? currentBusiness.account.address.CEP.split('-').join('') : '0';
     const sCepDestino = cep.split('-').join('');
 

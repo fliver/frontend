@@ -1,7 +1,7 @@
 const env = {
   mediaURL: 'prod',
   api: 'prod',
-  domain: 'dev',
+  domain: 'prod',
 };
 
 const variants = {
